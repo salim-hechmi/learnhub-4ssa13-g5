@@ -1,0 +1,45 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[margin=2cm]{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{graphicx}
+
+\title{\textbf{Module AWD : Architecture des Applications Web}\\ \Large Mini-Projet : Validation 1 (Présentation et Modélisation Microservices)\\ \huge \textbf{LearnHub : Plateforme Intelligente d'Apprentissage}}
+\author{\textbf{Selim Hechmi} (Marketplace \& Billing) \and \textbf{Équipe LearnHub} \\ Classe : 4SSA13 -- Groupe : G1 \\ ESPRIT -- Année Universitaire 2026/2027}
+\date{Novembre 2026}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Présentation du Sujet et Analyse Fonctionnelle}
+\subsection{Problématique}
+Le projet \textbf{LearnHub} répond à la problématique de la dispersion des outils dans l'apprentissage en ligne. Actuellement, les étudiants doivent naviguer entre plusieurs plateformes non intégrées pour acheter des formations, suivre les cours, passer des tests certifiants et échanger avec la communauté.
+
+\subsection{Solution et Périmètre Réaliste}
+LearnHub propose un écosystème modulaire fondé sur 7 microservices Spring Boot. Le périmètre de la Validation 1 porte sur la modélisation rigoureuse des contextes bornés (Bounded Contexts), l'isolation absolue des bases de données et l'initialisation des projets sur le dépôt Git public.
+
+\section{Découpage en Microservices}
+Le découpage respecte les principes du \textit{Domain-Driven Design} :
+\begin{itemize}
+    \item \textbf{identity-service (:8081)} : Service commun d'authentification JWT, gestion des profils et des rôles.
+    \item \textbf{course-service (:8082)} : Catalogue officiel, cours, chapitres et ressources.
+    \item \textbf{learning-journey-service (:8083)} : Inscriptions, suivi de la progression et complétion des leçons.
+    \item \textbf{assessment-service (:8084)} : Quiz, banques de questions, résultats et diplômes.
+    \item \textbf{marketplace-service (:8085)} : Commandes, paiements sandbox et factures (Responsable : Selim Hechmi).
+    \item \textbf{community-service (:8086)} : Avis vérifiés, discussions et badges d'engagement.
+    \item \textbf{ai-learning-coach-service (:8087)} : Service avancé de tutorat et plans d'étude par IA.
+\end{itemize}
+
+\section{Données et Communications}
+Chaque microservice possède sa propre base de données. Les communications synchrones sont assurées par \textbf{Spring Cloud OpenFeign} (avec Circuit Breaker et timeout) et les communications asynchrones par \textbf{RabbitMQ} (événements \texttt{PaymentCompleted}, \texttt{ReviewPosted}, \texttt{CertificateIssued}).
+
+\section{Focus : Marketplace \& Billing (Selim Hechmi)}
+Le service gère le panier, les commandes, les paiements sandbox et la facturation. Dès confirmation du paiement, l'événement asynchrone \texttt{PaymentCompleted} est publié sur RabbitMQ afin d'initialiser l'inscription sans bloquer la transaction.
+
+\end{document}

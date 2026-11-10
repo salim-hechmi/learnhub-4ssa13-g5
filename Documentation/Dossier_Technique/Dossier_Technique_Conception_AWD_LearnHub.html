@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dossier Technique de Conception - LearnHub (AWD 2026/2027)</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.5;
+            color: #1e293b;
+            margin: 0;
+            padding: 25px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border-radius: 6px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #b30000;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .header-title {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        .header-badge {
+            font-size: 22pt;
+            font-weight: 900;
+            color: #b30000;
+            letter-spacing: 1px;
+        }
+        h1 {
+            color: #0f172a;
+            font-size: 18pt;
+            text-align: center;
+            margin: 20px 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #475569;
+            font-size: 12pt;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+        h2 {
+            color: #b30000;
+            font-size: 13pt;
+            border-bottom: 1.5px solid #cbd5e1;
+            padding-bottom: 6px;
+            margin-top: 30px;
+            margin-bottom: 14px;
+        }
+        h3 {
+            color: #1e40af;
+            font-size: 11.5pt;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .info-box {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-left: 5px solid #b30000;
+            padding: 12px 18px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+            font-size: 10pt;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 9.5pt;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #1e293b;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        code {
+            font-family: Consolas, 'Courier New', monospace;
+            background-color: #f1f5f9;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: #b30000;
+            font-size: 9pt;
+        }
+        pre {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 12px 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: Consolas, monospace;
+            font-size: 9pt;
+            line-height: 1.45;
+        }
+        .callout {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid #16a34a;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-size: 9.5pt;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <div class="header-title">ESPRIT – Année Universitaire 2026-2027</div>
+            <div style="color: #64748b; font-size: 10pt;">Module : Architecture des Applications Web (AWD)</div>
+        </div>
+        <div class="header-badge">AWD</div>
+    </div>
+
+    <h1>Dossier Technique de Conception &amp; Modélisation Microservices</h1>
+    <div class="subtitle">Projet LearnHub – Validation 1 (Architecture Distribuée 6+1)</div>
+
+    <div class="info-box">
+        <strong>Classe :</strong> 4SSA13 &nbsp;|&nbsp; <strong>Groupe :</strong> G1<br>
+        <strong>Étudiants :</strong> Selim Hechmi &amp; Équipe LearnHub<br>
+        <strong>Microservice de Selim Hechmi :</strong> Marketplace &amp; Billing (Port 8085) + Identity (Service commun)<br>
+        <strong>Dépôt Git :</strong> Public avec enseignant ajouté comme collaborateur
+    </div>
+
+    <h2>I. Présentation du Projet &amp; Analyse Fonctionnelle</h2>
+    <p>
+        <strong>Idée générale :</strong> LearnHub est une plateforme web intelligente qui relie, au sein d'un écosystème distribué, la découverte de cours, l'apprentissage structuré en chapitres, l'évaluation certifiante, l'achat en ligne, l'échange communautaire et l'accompagnement personnalisé par Intelligence Artificielle.
+    </p>
+    <p>
+        <strong>Problématique réelle :</strong> Les étudiants souffrent de la dispersion de leurs données entre de multiples plateformes isolées (vidéos séparées des quiz, absence de suivi centralisé et manque d'accompagnement interactif). LearnHub centralise tout le parcours dans une architecture hautement résiliente.
+    </p>
+
+    <h2>II. Découpage en 7 Microservices (Bounded Contexts)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Microservice</th>
+                <th>Port</th>
+                <th>Capacité Métier (Responsabilité)</th>
+                <th>Base Dédiée</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>0</td>
+                <td><strong>identity-service</strong> (Commun)</td>
+                <td><code>8081</code></td>
+                <td>Gestion des comptes, profils, rôles (Étudiant, Formateur, Admin) et JWT</td>
+                <td>MySQL (<code>learnhub_identity_db</code>)</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td><strong>course-service</strong></td>
+                <td><code>8082</code></td>
+                <td>Catalogue officiel, catégories, cours, chapitres et ressources</td>
+                <td>MySQL (<code>learnhub_course_db</code>)</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td><strong>learning-journey-service</strong></td>
+                <td><code>8083</code></td>
+                <td>Inscriptions aux cours, suivi de la progression et leçons validées</td>
+                <td>MySQL (<code>learnhub_journey_db</code>)</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td><strong>assessment-service</strong></td>
+                <td><code>8084</code></td>
+                <td>Banques de quiz, questions, passage de tests et certificats numériques</td>
+                <td>MySQL (<code>learnhub_assessment_db</code>)</td>
+            </tr>
+            <tr style="background-color: #eff6ff;">
+                <td>4</td>
+                <td><strong>marketplace-service</strong></td>
+                <td><code>8085</code></td>
+                <td><strong>Responsable : Selim Hechmi</strong> (Commandes, paiement sandbox, factures)</td>
+                <td>MySQL (<code>learnhub_marketplace_db</code>)</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td><strong>community-service</strong></td>
+                <td><code>8086</code></td>
+                <td>Avis vérifiés sur les cours, fils de discussion et badges de réussite</td>
+                <td>MongoDB (<code>learnhub_community_db</code>)</td>
+            </tr>
+            <tr style="background-color: #faf5ff;">
+                <td>6</td>
+                <td><strong>ai-learning-coach-service</strong></td>
+                <td><code>8087</code></td>
+                <td><strong>Service Avancé</strong> (Génération de plans d'étude &amp; chatbot IA)</td>
+                <td>MongoDB (<code>learnhub_aicoach_db</code>)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout">
+        <strong>Règle d'or AWD respectée :</strong> Une base dédiée par microservice. Aucun microservice ne lit directement les tables d'un autre service. Les entités distantes sont référencées exclusivement par leur identifiant technique (<code>courseId</code>, <code>studentId</code>).
+    </div>
+
+    <h2>III. Communications Interservices</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Interaction</th>
+                <th>Mode</th>
+                <th>Technologie</th>
+                <th>Justification &amp; Comportement en cas de panne</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>Community ➔ Journey</code></td>
+                <td>Synchrone</td>
+                <td>OpenFeign</td>
+                <td>Vérifie qu'un étudiant est inscrit avant d'accepter son avis. Timeout 2s + Réponse 503 contrôlée.</td>
+            </tr>
+            <tr>
+                <td><code>Journey ➔ Course</code></td>
+                <td>Synchrone</td>
+                <td>OpenFeign</td>
+                <td>Vérifie que le cours existe et est publié avant l'inscription.</td>
+            </tr>
+            <tr>
+                <td><code>Marketplace ➔ Journey</code></td>
+                <td>Asynchrone</td>
+                <td>RabbitMQ (<code>PaymentCompleted</code>)</td>
+                <td>Découplage total : crée l'inscription après paiement sans bloquer l'acheteur. Idempotent.</td>
+            </tr>
+            <tr>
+                <td><code>Community ➔ Course</code></td>
+                <td>Asynchrone</td>
+                <td>RabbitMQ (<code>ReviewPosted</code>)</td>
+                <td>Met à jour la note moyenne affichée dans le catalogue en tâche de fond.</td>
+            </tr>
+            <tr>
+                <td><code>Assessment ➔ Community</code></td>
+                <td>Asynchrone</td>
+                <td>RabbitMQ (<code>CertificateIssued</code>)</td>
+                <td>Community attribue un badge d'accomplissement dès l'obtention du diplôme.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>IV. Focus Individuel : Marketplace &amp; Billing (Selim Hechmi)</h2>
+    <p>
+        Le microservice <strong>Marketplace &amp; Billing</strong> est sous la responsabilité de <strong>Selim Hechmi</strong>. 
+        Il gère la conversion des cours sélectionnés en commande ferme, la gestion des paiements simulés en environnement sandbox et l'édition automatique des factures.
+    </p>
+    <ul>
+        <li><strong>Entités JPA :</strong> <code>Order</code>, <code>OrderItem</code>, <code>Payment</code>, <code>Invoice</code>.</li>
+        <li><strong>Endpoints REST exposés :</strong>
+            <ul>
+                <li><code>POST /api/orders</code> $ightarrow$ Code <code>201 Created</code> (Création de commande)</li>
+                <li><code>GET /api/orders/{id}</code> $ightarrow$ Code <code>200 OK</code> (Détail de la commande)</li>
+                <li><code>POST /api/orders/{id}/payments</code> $ightarrow$ Code <code>201 Created</code> (Paiement simulé &amp; Facturation)</li>
+                <li><code>GET /api/invoices/{id}</code> $ightarrow$ Code <code>200 OK</code> (Téléchargement de facture)</li>
+            </ul>
+        </li>
+        <li><strong>Événement RabbitMQ publié :</strong> <code>PaymentCompleted</code> contenant <code>eventId</code>, <code>orderId</code>, <code>studentId</code>, <code>courseId</code>, <code>amount</code>, <code>occurredAt</code>.</li>
+    </ul>
+
+    <h2>V. Architecture Technique Globale &amp; Dépôt Git</h2>
+    <p>L'ensemble est orchestré via Spring Cloud (API Gateway, Eureka, Config Server) et Docker Compose. Le dépôt Git public contient l'arborescence complète demandée :</p>
+    <pre>
+learnhub-4ssa13-g1/
+├── Backend/ (7 projets Spring Boot initialisés)
+├── Frontend/ (Application cliente)
+├── Documentation/
+│   ├── Presentation/ (Diaporama &amp; Guides)
+│   ├── Diagrams/ (SVG d'architecture, cas d'utilisation et classes)
+│   └── Dossier_Technique/
+└── README.md</pre>
+</div>
+
+</body>
+</html>
