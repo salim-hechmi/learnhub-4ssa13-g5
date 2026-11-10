@@ -13,12 +13,12 @@ Chaque microservice dispose de sa **propre base de données dédiée** (aucune t
 | Service | Port | Base de données | Responsabilité Métier | Responsable de l'équipe |
 |---|:---:|---|---|---|
 | **`identity-service`** | `8081` | MySQL (`learnhub_identity_db`) | Inscription, connexion JWT, profils et gestion des rôles (Admin/Formateur/Étudiant) | *Projet commun (Équipe entière)* |
-| **`course-service`** | `8082` | MySQL (`learnhub_course_db`) | Gestion du catalogue de formations, catégories, chapitres et ressources pédagogiques | Membre 2 |
-| **`learning-journey-service`** | `8083` | MySQL (`learnhub_journey_db`) | Gestion des inscriptions, suivi de progression par leçons et objectifs d'apprentissage | Membre 3 |
-| **`assessment-service`** | `8084` | MySQL (`learnhub_assessment_db`) | Conception de quiz, soumission de tentatives de test, calcul de score et émission de certificats | Membre 4 |
+| **`course-service`** | `8082` | MySQL (`learnhub_course_db`) | Gestion du catalogue de formations, catégories, chapitres et ressources pédagogiques | Nawres SOUA |
+| **`learning-journey-service`** | `8083` | MySQL (`learnhub_journey_db`) | Gestion des inscriptions, suivi de progression par leçons et objectifs d'apprentissage | Mohamed Aziz BEN MAMI |
+| **`assessment-service`** | `8084` | MySQL (`learnhub_assessment_db`) | Conception de quiz, soumission de tentatives de test, calcul de score et émission de certificats | Adam NSIRI |
 | **`marketplace-service`** | `8085` | MySQL (`learnhub_marketplace_db`) | Gestion des paniers, commandes, paiements sandbox et facturation numérique | **Selim Hechmi** |
-| **`community-service`** | `8086` | MongoDB / MySQL (`learnhub_community_db`) | Avis vérifiés sur les cours, fils de discussion, modération et badges d'engagement | Membre 5 |
-| **`ai-learning-coach-service`** | `8087` | MongoDB / MySQL (`learnhub_aicoach_db`) | *(Technologie avancée)* Génération de plans d'étude personnalisés et assistant de tutorat interactif | Membre 6 |
+| **`community-service`** | `8086` | MongoDB / MySQL (`learnhub_community_db`) | Avis vérifiés sur les cours, fils de discussion, modération et badges d'engagement | Mootez SFAIHI |
+| **`ai-learning-coach-service`** | `8087` | MongoDB / MySQL (`learnhub_aicoach_db`) | *(Technologie avancée)* Génération de plans d'étude personnalisés et assistant de tutorat interactif | Adam NSIRI |
 
 ---
 

@@ -11,7 +11,7 @@
 - **Classe :** 4SSA13 &nbsp;|&nbsp; **Groupe :** G1
 - **Étudiants :**
   - **Selim Hechmi** (*Responsable : Marketplace & Billing Service + Co-conception Identity*)
-  - **Équipe de développement AWD** (*Responsables des microservices métier*)
+  - **Nawres SOUA, Mohamed Aziz BEN MAMI, Adam NSIRI, Mootez SFAIHI** (*Responsables des microservices métier*)
 - **Dépôt Git :** Public avec enseignant ajouté comme collaborateur
 
 ---
@@ -312,15 +312,15 @@ Chaque microservice expose une API REST standardisée, auto-documentée avec Spr
 
 ### 11.1. Structure Imposée du Dépôt
 ```
-learnhub-4ssa13-g1/
+learnhub-4ssa13-g5/
 ├── Backend/
 │   ├── identity-service/         # Service commun (Équipe)
-│   ├── course-service/           # Membre 2
-│   ├── learning-journey-service/ # Membre 3
-│   ├── assessment-service/       # Membre 4
+│   ├── course-service/           # Nawres SOUA
+│   ├── learning-journey-service/ # Mohamed Aziz BEN MAMI
+│   ├── assessment-service/       # Adam NSIRI
 │   ├── marketplace-service/      # Selim Hechmi
-│   ├── community-service/        # Membre 5
-│   ├── ai-learning-coach-service/# Membre 6 (Service Avancé)
+│   ├── community-service/        # Mootez SFAIHI
+│   ├── ai-learning-coach-service/# Adam NSIRI (Service Avancé)
 │   └── README.md
 ├── Frontend/                     # Application cliente Web
 ├── Documentation/

@@ -11,15 +11,15 @@
 
 | Étape | Slide(s) | Contenu | Intervenant | Durée |
 |---|:---:|---|---|:---:|
-| **1. Introduction & Contexte** | Slides 1 - 2 | Page de garde, problème réel et solution globale | **Membre 1** | **1 min 20 s** |
-| **2. Modélisation Fonctionnelle** | Slides 3 - 4 | Acteurs, cas d'utilisation et scénario transversal | **Membre 2** | **1 min 45 s** |
-| **3. Décomposition Microservices** | Slide 5 | Découpage en 7 Bounded Contexts et responsabilités | **Membre 3** | **1 min** |
-| **4. Architecture & Données** | Slides 6 - 7 | Schéma technique Spring Cloud et Database-per-service | **Membre 4** | **1 min 45 s** |
-| **5. Communications & Événements** | Slide 8 | Sync (OpenFeign) vs Async (RabbitMQ) & Résilience | **Membre 5** | **1 min** |
+| **1. Introduction & Contexte** | Slides 1 - 2 | Page de garde, problème réel et solution globale | **Nawres SOUA** | **1 min 20 s** |
+| **2. Modélisation Fonctionnelle** | Slides 3 - 4 | Acteurs, cas d'utilisation et scénario transversal | **Mohamed Aziz BEN MAMI** | **1 min 45 s** |
+| **3. Décomposition Microservices** | Slide 5 | Découpage en 7 Bounded Contexts et responsabilités | **Adam NSIRI** | **1 min** |
+| **4. Architecture & Données** | Slides 6 - 7 | Schéma technique Spring Cloud et Database-per-service | **Selim Hechmi** | **1 min 45 s** |
+| **5. Communications & Événements** | Slide 8 | Sync (OpenFeign) vs Async (RabbitMQ) & Résilience | **Mootez SFAIHI** | **1 min** |
 | **6. Zoom Individuel - Socle Commun** | Slide 5 / 9a | Microservice `identity-service` (port 8081) | **Présenté par un membre** | **1 min** |
 | **7. Zoom Individuel - Marketplace** | Slide 9b | Microservice `marketplace-service` (port 8085) | **Selim Hechmi** | **1 min** |
 | **8. Zooms Individuels - Autres Services** | Slides 9c-9f | Course, Journey, Assessment, Community, AI Coach | **Chaque responsable** | **1 min / étudiant** |
-| **9. Technologies & Sécurité** | Slide 10 | Stack Spring Boot 3, Keycloak, JWT et Docker | **Membre 6** | **45 s** |
+| **9. Technologies & Sécurité** | Slide 10 | Stack Spring Boot 3, Keycloak, JWT et Docker | **Adam NSIRI** | **45 s** |
 | **10. Organisation Git & Planning** | Slides 11 - 12 | GitFlow, branches, commits, risques et conclusion | **Tous / Membre désigné** | **1 min 45 s** |
 
 ---

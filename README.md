@@ -18,11 +18,11 @@
 | Membre | Microservice Attribué | Rôle & Responsabilité Métier | Base de Données |
 |---|---|---|---|
 | **Selim Hechmi** *(salim-hechmi)* | **`marketplace-service`** &amp; Co-dev `identity-service` | Commandes, panier, transactions sandbox de test, facturation et émission de l'événement `PaymentCompleted` | MySQL (`learnhub_marketplace_db`) |
-| **Membre 2** | **`course-service`** | Catalogue officiel, cours, chapitres hiérarchisés et ressources pédagogiques | MySQL (`learnhub_course_db`) |
-| **Membre 3** | **`learning-journey-service`** | Inscriptions, avancement pas à pas, complétion des leçons et objectifs | MySQL (`learnhub_journey_db`) |
-| **Membre 4** | **`assessment-service`** | Quiz, banques de questions, calcul automatique des scores et diplômes certifiants | MySQL (`learnhub_assessment_db`) |
-| **Membre 5** | **`community-service`** | Avis notés vérifiés (réservés aux inscrits), forums de discussion et badges | MongoDB (`learnhub_community_db`) |
-| **Membre 6** | **`ai-learning-coach-service`** *(Avancé)* | *(Technologie avancée)* Plans d'étude personnalisés et tutorat conversationnel par IA | MongoDB (`learnhub_aicoach_db`) |
+| **Nawres SOUA** | **`course-service`** | Catalogue officiel, cours, chapitres hiérarchisés et ressources pédagogiques | MySQL (`learnhub_course_db`) |
+| **Mohamed Aziz BEN MAMI** | **`learning-journey-service`** | Inscriptions, avancement pas à pas, complétion des leçons et objectifs | MySQL (`learnhub_journey_db`) |
+| **Adam NSIRI** | **`assessment-service`** | Quiz, banques de questions, calcul automatique des scores et diplômes certifiants | MySQL (`learnhub_assessment_db`) |
+| **Mootez SFAIHI** | **`community-service`** | Avis notés vérifiés (réservés aux inscrits), forums de discussion et badges | MongoDB (`learnhub_community_db`) |
+| **Adam NSIRI** | **`ai-learning-coach-service`** *(Avancé)* | *(Technologie avancée)* Plans d'étude personnalisés et tutorat conversationnel par IA | MongoDB (`learnhub_aicoach_db`) |
 | **Toute l'équipe** | **`identity-service`** *(Socle commun)* | Authentification sécurisée par jeton JWT, profils, permissions et rôles | MySQL (`learnhub_identity_db`) |
 
 ---
@@ -79,7 +79,7 @@ L'architecture repose sur l'écosystème **Spring Cloud** et respecte scrupuleus
 Le dépôt respecte rigoureusement l'organisation demandée par l'enseignant :
 
 ```text
-learnhub-4ssa13-g1/
+learnhub-4ssa13-g5/
 ├── Backend/
 │   ├── identity-service/          # Service commun d'authentification et utilisateurs (:8081)
 │   ├── course-service/            # Microservice Catalogue et cours (:8082)
