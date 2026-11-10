@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 450" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
+    <rect x="0" y="0" width="900" height="50" fill="#1e293b"/>
+    <text x="450" y="32" fill="#ffffff" font-size="15" font-weight="bold" text-anchor="middle">DIAGRAMME DE CLASSES : COURSE MANAGEMENT (:8082)</text>
+    
+      <!-- Category -->
+      <g transform="translate(40, 80)">
+        <rect width="200" height="120" rx="6" fill="#f8fafc" stroke="#3b82f6" stroke-width="2"/>
+        <rect width="200" height="30" rx="6" fill="#3b82f6"/>
+        <text x="100" y="20" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Category</text>
+        <text x="15" y="55" fill="#0f172a" font-size="11">- id: Long [PK]</text>
+        <text x="15" y="75" fill="#0f172a" font-size="11">- name: String</text>
+        <text x="15" y="95" fill="#0f172a" font-size="11">- slug: String</text>
+      </g>
+      <!-- Course -->
+      <g transform="translate(300, 80)">
+        <rect width="240" height="170" rx="6" fill="#f8fafc" stroke="#3b82f6" stroke-width="2"/>
+        <rect width="240" height="30" rx="6" fill="#3b82f6"/>
+        <text x="120" y="20" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Course</text>
+        <text x="15" y="55" fill="#0f172a" font-size="11">- id: Long [PK]</text>
+        <text x="15" y="75" fill="#0f172a" font-size="11">- title: String</text>
+        <text x="15" y="95" fill="#0f172a" font-size="11">- instructorId: Long (ref ID)</text>
+        <text x="15" y="115" fill="#0f172a" font-size="11">- categoryId: Long [FK]</text>
+        <text x="15" y="135" fill="#0f172a" font-size="11">- price: Double</text>
+        <text x="15" y="155" fill="#0f172a" font-size="11">- published: Boolean</text>
+      </g>
+      <!-- Chapter -->
+      <g transform="translate(600, 80)">
+        <rect width="210" height="130" rx="6" fill="#f8fafc" stroke="#3b82f6" stroke-width="2"/>
+        <rect width="210" height="30" rx="6" fill="#3b82f6"/>
+        <text x="105" y="20" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Chapter</text>
+        <text x="15" y="55" fill="#0f172a" font-size="11">- id: Long [PK]</text>
+        <text x="15" y="75" fill="#0f172a" font-size="11">- courseId: Long [FK]</text>
+        <text x="15" y="95" fill="#0f172a" font-size="11">- title: String</text>
+        <text x="15" y="115" fill="#0f172a" font-size="11">- orderIndex: Integer</text>
+      </g>
+      <!-- LearningResource -->
+      <g transform="translate(600, 260)">
+        <rect width="210" height="140" rx="6" fill="#f8fafc" stroke="#3b82f6" stroke-width="2"/>
+        <rect width="210" height="30" rx="6" fill="#3b82f6"/>
+        <text x="105" y="20" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">LearningResource</text>
+        <text x="15" y="55" fill="#0f172a" font-size="11">- id: Long [PK]</text>
+        <text x="15" y="75" fill="#0f172a" font-size="11">- chapterId: Long [FK]</text>
+        <text x="15" y="95" fill="#0f172a" font-size="11">- title: String</text>
+        <text x="15" y="115" fill="#0f172a" font-size="11">- resourceType: String</text>
+        <text x="15" y="135" fill="#0f172a" font-size="11">- resourceUrl: String</text>
+      </g>
+      <!-- Lines -->
+      <line x1="240" y1="130" x2="300" y2="130" stroke="#3b82f6" stroke-width="2"/>
+      <text x="248" y="122" fill="#3b82f6" font-size="11" font-weight="bold">1</text>
+      <text x="285" y="122" fill="#3b82f6" font-size="11" font-weight="bold">1..*</text>
+
+      <line x1="540" y1="130" x2="600" y2="130" stroke="#3b82f6" stroke-width="2"/>
+      <text x="548" y="122" fill="#3b82f6" font-size="11" font-weight="bold">1</text>
+      <text x="585" y="122" fill="#3b82f6" font-size="11" font-weight="bold">1..*</text>
+
+      <line x1="705" y1="210" x2="705" y2="260" stroke="#3b82f6" stroke-width="2"/>
+      <text x="690" y="225" fill="#3b82f6" font-size="11" font-weight="bold">1</text>
+      <text x="690" y="255" fill="#3b82f6" font-size="11" font-weight="bold">1..*</text>
+    
+  </svg>

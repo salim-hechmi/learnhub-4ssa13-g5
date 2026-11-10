@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 450" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
+    <rect x="0" y="0" width="900" height="50" fill="#1e293b"/>
+    <text x="450" y="32" fill="#ffffff" font-size="15" font-weight="bold" text-anchor="middle">DIAGRAMME DE CLASSES : ASSESSMENT & CERTIFICATION (:8084)</text>
+    
+      <!-- Quiz -->
+      <g transform="translate(50, 80)">
+        <rect width="220" height="140" rx="6" fill="#f8fafc" stroke="#f59e0b" stroke-width="2"/>
+        <rect width="220" height="30" rx="6" fill="#f59e0b"/>
+        <text x="110" y="20" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Quiz</text>
+        <text x="15" y="55" fill="#0f172a" font-size="11">- id: Long [PK]</text>
+        <text x="15" y="75" fill="#0f172a" font-size="11">- courseId: Long (ref ID)</text>
+        <text x="15" y="95" fill="#0f172a" font-size="11">- title: String</text>
+        <text x="15" y="115" fill="#0f172a" font-size="11">- passingScore: Double</text>
+        <text x="15" y="135" fill="#0f172a" font-size="11">- maxAttempts: Integer</text>
+      </g>
+      <!-- Question -->
+      <g transform="translate(340, 80)">
+        <rect width="220" height="150" rx="6" fill="#f8fafc" stroke="#f59e0b" stroke-width="2"/>
+        <rect width="220" height="30" rx="6" fill="#f59e0b"/>
+        <text x="110" y="20" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Question</text>
+        <text x="15" y="55" fill="#0f172a" font-size="11">- id: Long [PK]</text>
+        <text x="15" y="75" fill="#0f172a" font-size="11">- quizId: Long [FK]</text>
+        <text x="15" y="95" fill="#0f172a" font-size="11">- text: String</text>
+        <text x="15" y="115" fill="#0f172a" font-size="11">- correctOption: String</text>
+        <text x="15" y="135" fill="#0f172a" font-size="11">- points: Integer</text>
+      </g>
+      <!-- StudentAttempt -->
+      <g transform="translate(50, 260)">
+        <rect width="220" height="140" rx="6" fill="#f8fafc" stroke="#f59e0b" stroke-width="2"/>
+        <rect width="220" height="30" rx="6" fill="#f59e0b"/>
+        <text x="110" y="20" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">StudentAttempt</text>
+        <text x="15" y="55" fill="#0f172a" font-size="11">- id: Long [PK]</text>
+        <text x="15" y="75" fill="#0f172a" font-size="11">- quizId: Long [FK]</text>
+        <text x="15" y="95" fill="#0f172a" font-size="11">- studentId: Long (ref ID)</text>
+        <text x="15" y="115" fill="#0f172a" font-size="11">- score: Double</text>
+        <text x="15" y="135" fill="#0f172a" font-size="11">- passed: Boolean</text>
+      </g>
+      <!-- Certificate -->
+      <g transform="translate(340, 260)">
+        <rect width="220" height="140" rx="6" fill="#f8fafc" stroke="#f59e0b" stroke-width="2"/>
+        <rect width="220" height="30" rx="6" fill="#f59e0b"/>
+        <text x="110" y="20" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Certificate</text>
+        <text x="15" y="55" fill="#0f172a" font-size="11">- id: Long [PK]</text>
+        <text x="15" y="75" fill="#0f172a" font-size="11">- studentAttemptId: Long [FK]</text>
+        <text x="15" y="95" fill="#0f172a" font-size="11">- certificateCode: String</text>
+        <text x="15" y="115" fill="#0f172a" font-size="11">- issueDate: LocalDateTime</text>
+      </g>
+      <!-- Lines -->
+      <line x1="270" y1="130" x2="340" y2="130" stroke="#f59e0b" stroke-width="2"/>
+      <text x="278" y="122" fill="#f59e0b" font-size="11" font-weight="bold">1</text>
+      <text x="325" y="122" fill="#f59e0b" font-size="11" font-weight="bold">1..*</text>
+
+      <line x1="270" y1="320" x2="340" y2="320" stroke="#f59e0b" stroke-width="2"/>
+      <text x="278" y="312" fill="#f59e0b" font-size="11" font-weight="bold">0..1</text>
+      <text x="325" y="312" fill="#f59e0b" font-size="11" font-weight="bold">1</text>
+    
+  </svg>
