@@ -1,0 +1,42 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: course-service
+  datasource:
+    # Par défaut : base H2 en mémoire avec persistance fichier pour démarrage instantané
+    url: jdbc:h2:mem:learnhub_course_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: 
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# Documentation interactive OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+
+# Configuration d'intégration Spring Cloud & Résilience (prévue pour l'étape 4)
+learnhub:
+  eureka:
+    service-url: http://localhost:8761/eureka/
+  rabbitmq:
+    host: localhost
+    port: 5672
+    exchange: learnhub.events.exchange
