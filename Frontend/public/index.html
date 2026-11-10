@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnHub - Plateforme Intelligente d'Apprentissage en Ligne</title>
+    <!-- Bootstrap 5 CSS & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4895ef;
+            --success: #2ec4b6;
+            --dark: #0f172a;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--primary) !important;
+            letter-spacing: -0.5px;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 50px 0;
+            margin-bottom: 40px;
+            border-bottom: 3px solid var(--primary);
+        }
+        .card-custom {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: #fff;
+        }
+        .card-custom:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+        }
+        .badge-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .service-pill {
+            background-color: #f1f5f9;
+            border-left: 4px solid var(--primary);
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Barre de Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fa-solid fa-graduation-cap me-2"></i>LearnHub</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link active" href="#catalog"><i class="fa-solid fa-book-open me-1"></i> Formations</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#journey"><i class="fa-solid fa-bars-progress me-1"></i> Mon Apprentissage</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#assessment"><i class="fa-solid fa-certificate me-1"></i> Quiz & Certificats</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#marketplace"><i class="fa-solid fa-cart-shopping me-1"></i> Panier & Commandes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#community"><i class="fa-solid fa-comments me-1"></i> Communauté</a></li>
+                    <li class="nav-item"><a class="nav-link text-primary fw-bold" href="#coach"><i class="fa-solid fa-robot me-1"></i> Coach IA</a></li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-light text-dark border me-3"><i class="fa-solid fa-network-wired text-success me-1"></i> API Gateway : 8080</span>
+                    <button class="btn btn-outline-primary btn-sm me-2"><i class="fa-solid fa-user me-1"></i> Connexion</button>
+                    <button class="btn btn-primary btn-sm">Inscription</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- En-tête Hero -->
+    <div class="hero">
+        <div class="container text-center">
+            <span class="badge bg-primary mb-3 px-3 py-2">Projet AWD - Année 2026/2027</span>
+            <h1 class="display-5 fw-bold">Plateforme Intelligente d'Apprentissage en Ligne</h1>
+            <p class="lead text-light opacity-75 max-w-700 mx-auto">
+                Architecture microservices distribuée : 6 contextes métier + 1 socle commun d'identité, synchronisation temps réel par RabbitMQ et résilience Spring Cloud.
+            </p>
+        </div>
+    </div>
+
+    <!-- Conteneur Principal -->
+    <div class="container mb-5">
+
+        <!-- Statut de l'Architecture Microservices -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-server text-primary me-2"></i>Cartographie des 7 Microservices BackEnd</h5>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="service-pill">
+                                <strong>identity-service</strong> (8081)<br>
+                                <span class="text-muted">Auth JWT, Rôles, Profils</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="service-pill">
+                                <strong>course-service</strong> (8082)<br>
+                                <span class="text-muted">Catalogue, Cours, Chapitres</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="service-pill">
+                                <strong>learning-journey-service</strong> (8083)<br>
+                                <span class="text-muted">Inscriptions, Progression</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="service-pill">
+                                <strong>assessment-service</strong> (8084)<br>
+                                <span class="text-muted">Quiz, Tests, Certificats</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="service-pill" style="border-left-color: #2ec4b6;">
+                                <strong>marketplace-service</strong> (8085)<br>
+                                <span class="text-muted">Responsable : Selim Hechmi (Paiements, Factures)</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="service-pill">
+                                <strong>community-service</strong> (8086)<br>
+                                <span class="text-muted">Avis vérifiés, Forums, Badges</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="service-pill" style="border-left-color: #7209b7;">
+                                <strong>ai-learning-coach-service</strong> (8087)<br>
+                                <span class="text-muted">Service Avancé : Plans personnalisés & Chatbot</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Catalogue de Cours (Course Management) -->
+        <div id="catalog" class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold mb-0"><i class="fa-solid fa-graduation-cap text-primary me-2"></i>Catalogue des Formations</h3>
+                <span class="badge bg-secondary">Course Management Service</span>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card card-custom h-100">
+                        <div class="p-3 bg-light text-center border-bottom">
+                            <i class="fa-brands fa-java fa-3x text-danger py-3"></i>
+                        </div>
+                        <div class="card-body">
+                            <span class="badge bg-info text-dark mb-2">Architecture Logicielle</span>
+                            <h5 class="card-title fw-bold">Microservices avec Spring Boot & Cloud</h5>
+                            <p class="card-text text-muted small">Maîtrisez Eureka, API Gateway, OpenFeign, RabbitMQ et Docker pour vos systèmes distribués.</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="fs-5 fw-bold text-primary">49.99 €</span>
+                                <button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-cart-plus me-1"></i>Commander</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-custom h-100">
+                        <div class="p-3 bg-light text-center border-bottom">
+                            <i class="fa-brands fa-react fa-3x text-info py-3"></i>
+                        </div>
+                        <div class="card-body">
+                            <span class="badge bg-warning text-dark mb-2">Web Moderne</span>
+                            <h5 class="card-title fw-bold">Frontend Réactif & Consommation d'APIs</h5>
+                            <p class="card-text text-muted small">Développez des interfaces fluides connectées à des microservices sécurisés par JWT.</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="fs-5 fw-bold text-primary">39.99 €</span>
+                                <button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-cart-plus me-1"></i>Commander</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-custom h-100">
+                        <div class="p-3 bg-light text-center border-bottom">
+                            <i class="fa-solid fa-brain fa-3x text-success py-3"></i>
+                        </div>
+                        <div class="card-body">
+                            <span class="badge bg-success mb-2">Intelligence Artificielle</span>
+                            <h5 class="card-title fw-bold">IA Appliquée & Systèmes de Recommandation</h5>
+                            <p class="card-text text-muted small">Intégrez des modèles de prédiction et générez des parcours adaptatifs d'apprentissage.</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="fs-5 fw-bold text-primary">59.99 €</span>
+                                <button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-cart-plus me-1"></i>Commander</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Pied de Page -->
+    <footer class="bg-dark text-light py-4 text-center mt-auto">
+        <div class="container">
+            <p class="mb-1 fw-bold">LearnHub - Module AWD (Validation 1 : Conception & Modélisation)</p>
+            <p class="small text-muted mb-0">ESPRIT - Année Universitaire 2026/2027 - Groupe 4SSA13</p>
+        </div>
+    </footer>
+
+</body>
+</html>

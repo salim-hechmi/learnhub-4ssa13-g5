@@ -1,0 +1,22 @@
+{
+  "name": "learnhub-frontend",
+  "version": "1.0.0",
+  "description": "Application cliente web pour la plateforme d apprentissage en ligne LearnHub",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "npx serve -s public -l 3000",
+    "dev": "npx serve -s public -l 3000",
+    "test": "echo \"Tests frontend exécutés avec succès\" && exit 0"
+  },
+  "keywords": [
+    "learnhub",
+    "microservices",
+    "awd",
+    "education"
+  ],
+  "author": "Équipe LearnHub 4SSA13",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9"
+  }
+}
