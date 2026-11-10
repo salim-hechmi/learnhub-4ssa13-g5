@@ -3,674 +3,1037 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LearnHub - Présentation Validation 1 AWD (2026/2027)</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>LearnHub - Présentation Validation 1 AWD (Séance 4)</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @page {
-            size: 16in 9in;
-            margin: 0;
-        }
         :root {
             --primary: #2563eb;
-            --primary-dark: #1e40af;
+            --primary-glow: rgba(37, 99, 235, 0.25);
             --secondary: #0f172a;
             --accent: #e11d48;
-            --bg-slide: #ffffff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --purple: #8b5cf6;
+            --bg: #090d16;
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
         }
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background-color: #0f172a;
+
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            overflow-x: hidden;
         }
-        .slide-container {
-            width: 100%;
-            max-width: 1200px;
-            margin-bottom: 30px;
-        }
-        .slide {
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background: var(--bg-slide);
-            border-radius: 12px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            padding: 45px 55px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            page-break-after: always;
-        }
-        .slide-header {
+
+        /* Top Bar */
+        .top-navbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #e2e8f0;
+            padding: 12px 30px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: #fff;
+        }
+        .brand i {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-ctrl {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 7px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-ctrl:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .slide-counter {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(37, 99, 235, 0.15);
+            border: 1px solid var(--primary);
+            color: #60a5fa;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        /* Slide Stage */
+        .stage-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 25px 20px;
+        }
+
+        .slide-deck {
+            width: 100%;
+            max-width: 1200px;
+            aspect-ratio: 16 / 9;
+            background: linear-gradient(145deg, #0f172a 0%, #111827 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px var(--primary-glow);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 50px;
+            overflow: hidden;
+        }
+
+        .slide-item {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease;
+        }
+        .slide-item.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.985); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Slide Header */
+        .slide-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             padding-bottom: 15px;
             margin-bottom: 25px;
         }
-        .slide-title {
-            font-size: 24pt;
-            font-weight: 800;
-            color: var(--secondary);
-            margin: 0;
+        .slide-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
-        .slide-badge {
-            background-color: #eff6ff;
-            color: var(--primary);
-            border: 1px solid #bfdbfe;
-            padding: 6px 14px;
+        .slide-badge-num {
+            background: var(--primary);
+            color: #fff;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+        }
+        .slide-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+        .slide-meta-badge {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-muted);
+            padding: 6px 12px;
             border-radius: 20px;
-            font-size: 10pt;
+            font-size: 0.8rem;
             font-weight: 600;
         }
-        .slide-body {
+
+        /* Slide Body Elements */
+        .slide-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
-        .slide-footer {
-            margin-top: auto;
-            border-top: 1px solid #f1f5f9;
-            padding-top: 10px;
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .card-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 22px;
+            transition: all 0.2s;
+        }
+        .card-panel:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .panel-danger { border-left: 4px solid var(--accent); }
+        .panel-success { border-left: 4px solid var(--success); }
+        .panel-primary { border-left: 4px solid var(--primary); }
+        .panel-warning { border-left: 4px solid var(--warning); }
+        .panel-purple { border-left: 4px solid var(--purple); }
+
+        .panel-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        ul.feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        ul.feature-list li {
+            font-size: 0.95rem;
+            line-height: 1.45;
+            color: #cbd5e1;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        ul.feature-list li i {
+            margin-top: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* Tables */
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+        }
+        .styled-table th {
+            background: rgba(15, 23, 42, 0.8);
+            color: #fff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .styled-table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
+        }
+        .styled-table tr:hover td {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .styled-table tr.highlight td {
+            background: rgba(37, 99, 235, 0.15);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* Code snippets & badges */
+        .code-pill {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 0, 0, 0.4);
+            color: #38bdf8;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+        .status-pill {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .status-201 { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .status-200 { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+
+        /* Slide Footer */
+        .slide-foot {
             display: flex;
             justify-content: space-between;
-            font-size: 9.5pt;
-            color: #64748b;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 15px;
+            margin-top: 20px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
         }
-        .card-box {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-left: 4px solid var(--primary);
-            border-radius: 8px;
-            padding: 18px 22px;
+
+        /* Speaker Note Box */
+        .speaker-drawer {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 10px;
+            padding: 12px 18px;
+            margin-top: 15px;
+            font-size: 0.86rem;
+            color: #fde68a;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .speaker-drawer i {
+            color: var(--warning);
+            font-size: 1.1rem;
+            margin-top: 2px;
+        }
+
+        /* Hero Slide */
+        .hero-title {
+            font-size: 3.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #9333ea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .hero-subtitle {
+            font-size: 1.35rem;
+            color: #e2e8f0;
+            font-weight: 600;
             margin-bottom: 15px;
-        }
-        .highlight {
-            color: var(--primary);
-            font-weight: bold;
-        }
-        .speaker-note {
-            background: #fffbeb;
-            border: 1px solid #fde68a;
-            border-radius: 8px;
-            padding: 10px 15px;
-            margin-top: 10px;
-            font-size: 9.5pt;
-            color: #92400e;
-        }
-        .speaker-note strong {
-            color: #b45309;
-        }
-        ul.custom-bullets {
-            list-style: none;
-            padding-left: 0;
-        }
-        ul.custom-bullets li {
-            position: relative;
-            padding-left: 28px;
-            margin-bottom: 12px;
-            font-size: 13pt;
-            line-height: 1.4;
-            color: #334155;
-        }
-        ul.custom-bullets li::before {
-            content: "➔";
-            position: absolute;
-            left: 0;
-            color: var(--primary);
-            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-<div class="slide-container">
+    <!-- Barre supérieure de navigation -->
+    <header class="top-navbar">
+        <div class="brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>LearnHub <span style="font-size:0.8rem; font-weight:500; color:var(--text-muted);">| Validation 1 (Séance 4)</span></span>
+        </div>
+        <div class="nav-controls">
+            <button class="btn-ctrl" onclick="prevSlide()"><i class="fa-solid fa-arrow-left"></i> Précédent</button>
+            <span class="slide-counter" id="slideIndicator">1 / 12</span>
+            <button class="btn-ctrl" onclick="nextSlide()">Suivant <i class="fa-solid fa-arrow-right"></i></button>
+            <button class="btn-ctrl" onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i> Plein Écran</button>
+        </div>
+    </header>
 
-    <!-- SLIDE 1 : PAGE DE GARDE -->
-    <div class="slide" id="slide1">
-        <div class="slide-header">
-            <span class="slide-badge">ESPRIT - 2026/2027</span>
-            <span class="slide-badge">Validation 1 : Architecture des Applications Web (AWD)</span>
-        </div>
-        <div class="slide-body text-center my-auto">
-            <div class="mb-3">
-                <i class="fa-solid fa-graduation-cap fa-4x text-primary"></i>
-            </div>
-            <h1 class="display-4 fw-bold text-dark mb-2">LearnHub</h1>
-            <h3 class="text-primary fw-bold mb-4">Plateforme Intelligente d'Apprentissage en Ligne</h3>
-            <p class="lead text-muted max-w-700 mx-auto mb-4">
-                Architecture microservices distribuée à 7 services Spring Boot (6 capacités métier + 1 socle commun d'identité) avec communication asynchrone RabbitMQ et résilience Spring Cloud.
-            </p>
-            <div class="card bg-light border p-3 d-inline-block text-start mx-auto" style="min-width: 480px;">
-                <div class="row small">
-                    <div class="col-6"><strong>Classe :</strong> 4SSA13</div>
-                    <div class="col-6"><strong>Groupe :</strong> G1</div>
-                    <div class="col-12 mt-2"><strong>Membres :</strong> Selim Hechmi &amp; Équipe de conception</div>
-                    <div class="col-12 mt-1"><strong>Enseignant :</strong> Module AWD</div>
-                </div>
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub - Validation 1 : Présentation du projet et modélisation microservices</span>
-            <span>Slide 1 / 12 (Durée : 20s)</span>
-        </div>
-    </div>
+    <!-- Zone Centrale du Diaporama -->
+    <main class="stage-container">
+        <div class="slide-deck">
 
-    <!-- SLIDE 2 : PROBLÉMATIQUE ET SOLUTION -->
-    <div class="slide" id="slide2">
-        <div class="slide-header">
-            <h2 class="slide-title">1. Problématique &amp; Solution LearnHub</h2>
-            <span class="slide-badge">Vision Métier</span>
-        </div>
-        <div class="slide-body">
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="card-box h-100" style="border-left-color: #e11d48;">
-                        <h4 class="fw-bold text-danger mb-3"><i class="fa-solid fa-triangle-exclamation me-2"></i>Le Problème Réel</h4>
-                        <ul class="custom-bullets">
-                            <li><strong>Fragmentation des outils :</strong> Les apprenants alternent entre plusieurs sites pour lire des cours, acheter des formations et trouver des exercices.</li>
-                            <li><strong>Absence de suivi unifié :</strong> Difficulté d'évaluer concrètement ses lacunes et de mesurer sa progression en temps réel.</li>
-                            <li><strong>Manque d'accompagnement :</strong> Absence de tuteur personnalisé et isolement face aux difficultés pédagogiques.</li>
-                        </ul>
+            <!-- SLIDE 1 : PAGE DE GARDE -->
+            <div class="slide-item active" id="slide-1">
+                <div class="slide-content text-center" style="align-items: center;">
+                    <div style="background: rgba(37,99,235,0.15); border: 1px solid var(--primary); padding: 6px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; color: #60a5fa; margin-bottom: 16px;">
+                        ESPRIT • MODULE AWD • ANNÉE UNIVERSITAIRE 2026-2027
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card-box h-100" style="border-left-color: #10b981;">
-                        <h4 class="fw-bold text-success mb-3"><i class="fa-solid fa-lightbulb me-2"></i>La Solution LearnHub</h4>
-                        <ul class="custom-bullets">
-                            <li><strong>Plateforme Tout-en-Un :</strong> Centralisation de la découverte, du paiement, de l'apprentissage et de la certification.</li>
-                            <li><strong>Parcours interactif &amp; badges :</strong> Validation leçon par leçon, quiz d'évaluation et avis communautaires vérifiés.</li>
-                            <li><strong>Coach IA adaptatif :</strong> Génération automatique de plans d'étude personnalisés et mentor conversationnel.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="speaker-note">
-                <strong>Speech Oral (1 min) :</strong> "Aujourd'hui, l'apprentissage en ligne souffre d'un éparpillement des outils. LearnHub résout ce problème en intégrant tout le cycle d'apprentissage dans un écosystème cohérent, autonome et modulaire grâce à l'architecture microservices."
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 2 / 12 (Durée : 1 min)</span>
-        </div>
-    </div>
-
-    <!-- SLIDE 3 : ACTEURS ET CAS D'UTILISATION -->
-    <div class="slide" id="slide3">
-        <div class="slide-header">
-            <h2 class="slide-title">2. Acteurs &amp; Cas d'Utilisation</h2>
-            <span class="slide-badge">Modélisation Fonctionnelle</span>
-        </div>
-        <div class="slide-body">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="card p-3 border-primary h-100">
-                        <h5 class="fw-bold text-primary"><i class="fa-solid fa-user-graduate me-2"></i>Étudiant</h5>
-                        <ul class="small mb-0 ps-3">
-                            <li>Consulter / acheter des cours</li>
-                            <li>Apprendre &amp; valider leçons</li>
-                            <li>Passer quiz &amp; diplôme</li>
-                            <li>Publier avis vérifié &amp; forums</li>
-                            <li>Interagir avec le coach IA</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card p-3 border-success h-100">
-                        <h5 class="fw-bold text-success"><i class="fa-solid fa-chalkboard-user me-2"></i>Formateur</h5>
-                        <ul class="small mb-0 ps-3">
-                            <li>Créer et structurer les cours</li>
-                            <li>Ajouter chapitres &amp; médias</li>
-                            <li>Publier les quiz d'évaluation</li>
-                            <li>Répondre aux questions</li>
-                            <li>Consulter les statistiques</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card p-3 border-danger h-100">
-                        <h5 class="fw-bold text-danger"><i class="fa-solid fa-user-shield me-2"></i>Administrateur</h5>
-                        <ul class="small mb-0 ps-3">
-                            <li>Gestion des comptes &amp; rôles</li>
-                            <li>Modération des avis et posts</li>
-                            <li>Gestion des catégories</li>
-                            <li>Supervision de l'écosystème</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card p-3 border-warning h-100">
-                        <h5 class="fw-bold text-warning"><i class="fa-solid fa-plug me-2"></i>Systèmes Externes</h5>
-                        <ul class="small mb-0 ps-3">
-                            <li>Passerelle de paiement test</li>
-                            <li>API de Modèle IA (NLP)</li>
-                            <li>Serveur d'Identity (Keycloak)</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-3 p-2 bg-light border rounded text-center small text-muted">
-                <i class="fa-solid fa-project-diagram me-1 text-primary"></i> Le diagramme de cas d'utilisation UML complet est disponible dans <code>Documentation/Diagrams/cas_utilisation_global.svg</code>.
-            </div>
-            <div class="speaker-note">
-                <strong>Speech Oral (1 min) :</strong> "Nous distinguons trois acteurs humains et deux services externes. Chaque acteur interagit avec des fonctionnalités bien délimitées sans créer de couplage technique."
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 3 / 12 (Durée : 1 min)</span>
-        </div>
-    </div>
-
-    <!-- SLIDE 4 : SCÉNARIO MÉTIER PRINCIPAL -->
-    <div class="slide" id="slide4">
-        <div class="slide-header">
-            <h2 class="slide-title">3. Scénario Métier Transversal de Bout en Bout</h2>
-            <span class="slide-badge">Parcours Utilisateur</span>
-        </div>
-        <div class="slide-body">
-            <div class="row g-2 text-center mb-3">
-                <div class="col"><div class="p-2 border rounded bg-light"><small class="text-muted">Étape 1</small><br><strong>Connexion JWT</strong><br><small class="text-primary">identity-service</small></div></div>
-                <div class="col"><div class="p-2 border rounded bg-light"><small class="text-muted">Étape 2</small><br><strong>Choix du Cours</strong><br><small class="text-primary">course-service</small></div></div>
-                <div class="col"><div class="p-2 border rounded bg-light"><small class="text-muted">Étape 3</small><br><strong>Paiement Simulé</strong><br><small class="text-primary">marketplace-service</small></div></div>
-                <div class="col"><div class="p-2 border rounded bg-light" style="border-color:#e11d48 !important;"><small class="text-danger fw-bold">Événement RabbitMQ</small><br><strong>PaymentCompleted</strong><br><small class="text-danger">Découplage async</small></div></div>
-                <div class="col"><div class="p-2 border rounded bg-light"><small class="text-muted">Étape 4</small><br><strong>Inscription Auto</strong><br><small class="text-primary">learning-journey</small></div></div>
-            </div>
-            <div class="row g-2 text-center mb-3">
-                <div class="col"><div class="p-2 border rounded bg-light"><small class="text-muted">Étape 5</small><br><strong>Apprentissage</strong><br><small class="text-muted">Progression leçons</small></div></div>
-                <div class="col"><div class="p-2 border rounded bg-light"><small class="text-muted">Étape 6</small><br><strong>Plan Coach IA</strong><br><small class="text-primary">ai-coach-service</small></div></div>
-                <div class="col"><div class="p-2 border rounded bg-light"><small class="text-muted">Étape 7</small><br><strong>Quiz Réussi</strong><br><small class="text-primary">assessment-service</small></div></div>
-                <div class="col"><div class="p-2 border rounded bg-light"><small class="text-muted">Étape 8</small><br><strong>Certificat Émis</strong><br><small class="text-success fw-bold">Diplôme officiel</small></div></div>
-                <div class="col"><div class="p-2 border rounded bg-light"><small class="text-muted">Étape 9</small><br><strong>Badge &amp; Avis</strong><br><small class="text-primary">community-service</small></div></div>
-            </div>
-            <div class="speaker-note">
-                <strong>Speech Oral (45s) :</strong> "Ce scénario illustre la valeur ajoutée de LearnHub : dès que l'étudiant paie son cours dans Marketplace, un événement asynchrone PaymentCompleted déclenche l'inscription automatique dans Journey sans bloquer la commande."
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 4 / 12 (Durée : 45s)</span>
-        </div>
-    </div>
-
-    <!-- SLIDE 5 : DÉCOUPAGE EN MICROSERVICES -->
-    <div class="slide" id="slide5">
-        <div class="slide-header">
-            <h2 class="slide-title">4. Découpage en 7 Microservices Métier</h2>
-            <span class="slide-badge">Bounded Contexts DDD</span>
-        </div>
-        <div class="slide-body">
-            <p class="small text-muted mb-2">Conformément aux directives AWD : un microservice par capacité métier, aucune base partagée et aucun découpage arbitraire par table.</p>
-            <table class="table table-bordered table-sm small align-middle mb-2">
-                <thead class="table-dark">
-                    <tr>
-                        <th>N°</th>
-                        <th>Microservice</th>
-                        <th>Port</th>
-                        <th>Responsabilité Principale</th>
-                        <th>Base Dédiée</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="table-light">
-                        <td><strong>0</strong></td>
-                        <td><strong>identity-service</strong> (Commun)</td>
-                        <td><code>8081</code></td>
-                        <td>Gestion des comptes, profils, rôles (Admin/Formateur/Étudiant) et JWT</td>
-                        <td>MySQL (<code>identity_db</code>)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>1</strong></td>
-                        <td><strong>course-service</strong></td>
-                        <td><code>8082</code></td>
-                        <td>Catalogue, gestion des cours, catégories, chapitres et ressources</td>
-                        <td>MySQL (<code>course_db</code>)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>2</strong></td>
-                        <td><strong>learning-journey-service</strong></td>
-                        <td><code>8083</code></td>
-                        <td>Inscriptions actives, complétion des leçons et suivi de progression</td>
-                        <td>MySQL (<code>journey_db</code>)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>3</strong></td>
-                        <td><strong>assessment-service</strong></td>
-                        <td><code>8084</code></td>
-                        <td>Quiz, banques de questions, tentatives de test et certificats numériques</td>
-                        <td>MySQL (<code>assessment_db</code>)</td>
-                    </tr>
-                    <tr class="table-primary">
-                        <td><strong>4</strong></td>
-                        <td><strong>marketplace-service</strong></td>
-                        <td><code>8085</code></td>
-                        <td>Commandes, panier, transactions de test et facturation (<strong>Selim Hechmi</strong>)</td>
-                        <td>MySQL (<code>market_db</code>)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>5</strong></td>
-                        <td><strong>community-service</strong></td>
-                        <td><code>8086</code></td>
-                        <td>Avis vérifiés sur les cours, fils de discussion, modération et badges</td>
-                        <td>MongoDB / MySQL</td>
-                    </tr>
-                    <tr class="table-warning">
-                        <td><strong>6</strong></td>
-                        <td><strong>ai-learning-coach-service</strong></td>
-                        <td><code>8087</code></td>
-                        <td><em>(Technologie Avancée)</em> Plans d'étude personnalisés et tutorat IA</td>
-                        <td>MongoDB / MySQL</td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="speaker-note">
-                <strong>Speech Oral (1 min) :</strong> "Chaque service est étanche, possède son propre contexte borné et son propre schéma de données. Nous ne faisons aucun partage de base de données."
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 5 / 12 (Durée : 1 min)</span>
-        </div>
-    </div>
-
-    <!-- SLIDE 6 : ARCHITECTURE TECHNIQUE GLOBALE -->
-    <div class="slide" id="slide6">
-        <div class="slide-header">
-            <h2 class="slide-title">5. Architecture Technique Globale AWD</h2>
-            <span class="slide-badge">Spring Cloud &amp; Docker</span>
-        </div>
-        <div class="slide-body">
-            <div class="row align-items-center">
-                <div class="col-md-7">
-                    <ul class="custom-bullets">
-                        <li><strong>Frontend Web :</strong> Interface responsive unique consommant l'API Gateway.</li>
-                        <li><strong>Spring Cloud Gateway (:8080) :</strong> Point d'entrée unique, filtre de sécurité JWT, routage dynamique.</li>
-                        <li><strong>Netflix Eureka (:8761) :</strong> Découverte dynamique de services sans adresses codées en dur.</li>
-                        <li><strong>RabbitMQ (:5672) :</strong> Bus d'événements asynchrones pour le découplage temps réel.</li>
-                        <li><strong>Spring Cloud OpenFeign :</strong> Requêtes synchrones inter-services avec gestion de timeout et circuit breaker.</li>
-                        <li><strong>Conteneurisation Docker :</strong> Orchestration via Docker Compose de toutes les briques.</li>
-                    </ul>
-                </div>
-                <div class="col-md-5 text-center">
-                    <div class="card p-3 bg-light border shadow-sm">
-                        <i class="fa-solid fa-network-wired fa-3x text-primary mb-2"></i>
-                        <h6 class="fw-bold mb-1">Diagramme Complet SVG</h6>
-                        <small class="text-muted">Visualisable dans <code>Documentation/Diagrams/architecture_globale_awd.svg</code></small>
-                    </div>
-                </div>
-            </div>
-            <div class="speaker-note">
-                <strong>Speech Oral (1 min) :</strong> "Voici notre architecture globale respectant scrupuleusement la stack AWD demandée. L'API Gateway protège nos microservices, Eureka assure la découverte, et Docker orchestre l'ensemble."
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 6 / 12 (Durée : 1 min)</span>
-        </div>
-    </div>
-
-    <!-- SLIDE 7 : DONNÉES ET BASES -->
-    <div class="slide" id="slide7">
-        <div class="slide-header">
-            <h2 class="slide-title">6. Données &amp; Bases de Données Indépendantes</h2>
-            <span class="slide-badge">Pattern Database-per-Service</span>
-        </div>
-        <div class="slide-body">
-            <div class="card-box mb-3" style="border-left-color: #16a34a;">
-                <h5 class="fw-bold text-success mb-2"><i class="fa-solid fa-database me-2"></i>Règle Fondamentale AWD : Aucune Base Partagée</h5>
-                <p class="small text-muted mb-0">Chaque microservice est propriétaire exclusif de son schéma. Pour référencer une entité externe, on stocke un identifiant simple (ex: <code>studentId</code>, <code>courseId</code>). Aucun lien de clé étrangère inter-bases.</p>
-            </div>
-            <div class="row g-2 small">
-                <div class="col-md-4"><div class="p-2 border rounded bg-white"><strong>MySQL (identity) :</strong> User, Role, UserProfile, Permission</div></div>
-                <div class="col-md-4"><div class="p-2 border rounded bg-white"><strong>MySQL (course) :</strong> Category, Course, Chapter, LearningResource</div></div>
-                <div class="col-md-4"><div class="p-2 border rounded bg-white"><strong>MySQL (journey) :</strong> Enrollment, LearningProgress, LessonCompletion</div></div>
-                <div class="col-md-4"><div class="p-2 border rounded bg-white"><strong>MySQL (assessment) :</strong> Quiz, Question, StudentAttempt, Certificate</div></div>
-                <div class="col-md-4"><div class="p-2 border rounded bg-white"><strong>MySQL (marketplace) :</strong> Order, OrderItem, Payment, Invoice</div></div>
-                <div class="col-md-4"><div class="p-2 border rounded bg-white"><strong>MongoDB (community &amp; coach) :</strong> Avis, Threads, Posts, StudyPlans</div></div>
-            </div>
-            <div class="speaker-note">
-                <strong>Speech Oral (45s) :</strong> "Pourquoi une base par service ? Pour garantir l'autonomie totale des équipes de développement, supprimer les blocages de verrous de base et permettre de faire évoluer chaque base indépendamment."
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 7 / 12 (Durée : 45s)</span>
-        </div>
-    </div>
-
-    <!-- SLIDE 8 : COMMUNICATIONS ET INTERACTIONS -->
-    <div class="slide" id="slide8">
-        <div class="slide-header">
-            <h2 class="slide-title">7. Interactions &amp; Communications Interservices</h2>
-            <span class="slide-badge">Synchrone (Feign) vs Asynchrone (RabbitMQ)</span>
-        </div>
-        <div class="slide-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="card-box h-100" style="border-left-color: #059669;">
-                        <h5 class="fw-bold text-success mb-2"><i class="fa-solid fa-arrows-rotate me-2"></i>Synchrone (OpenFeign)</h5>
-                        <p class="small text-muted mb-2">Utilisé quand une réponse immédiate est indispensable avant de continuer.</p>
-                        <ul class="small ps-3 mb-2">
-                            <li><code>Community ➔ Journey :</code> Vérifier l'inscription de l'étudiant avant d'autoriser un avis (évite faux avis).</li>
-                            <li><code>Journey ➔ Course :</code> Vérifier que le cours existe et est publié avant l'inscription.</li>
-                            <li><code>Coach IA ➔ Journey &amp; Assessment :</code> Collecter les progrès et scores pour le plan d'étude.</li>
-                        </ul>
-                        <div class="badge bg-success-subtle text-success border">Résilience : Timeout 2s + Réponse 503 contrôlée</div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card-box h-100" style="border-left-color: #e11d48;">
-                        <h5 class="fw-bold text-danger mb-2"><i class="fa-solid fa-envelope me-2"></i>Asynchrone (RabbitMQ)</h5>
-                        <p class="small text-muted mb-2">Utilisé pour les événements métier sans bloquer le client.</p>
-                        <ul class="small ps-3 mb-2">
-                            <li><strong><code>PaymentCompleted :</code></strong> Marketplace émet l'événement après paiement test ➔ Journey crée l'inscription.</li>
-                            <li><strong><code>ReviewPosted :</code></strong> Community publie l'avis ➔ Course met à jour la note moyenne du catalogue.</li>
-                            <li><strong><code>CertificateIssued :</code></strong> Assessment émet le diplôme ➔ Community attribue un badge d'engagement.</li>
-                        </ul>
-                        <div class="badge bg-danger-subtle text-danger border">Résilience : Retry + Dead-Letter Queue (DLQ)</div>
-                    </div>
-                </div>
-            </div>
-            <div class="speaker-note">
-                <strong>Speech Oral (1 min) :</strong> "Nous appliquons la règle d'or AWD : Feign pour une validation synchrone immédiate, et RabbitMQ pour tous les effets de bord asynchrones avec garantie d'idempotence."
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 8 / 12 (Durée : 1 min)</span>
-        </div>
-    </div>
-
-    <!-- SLIDE 9 : ZOOM PAR MICROSERVICE (SELIM HECHMI & ÉQUIPE) -->
-    <div class="slide" id="slide9">
-        <div class="slide-header">
-            <h2 class="slide-title">8. Zoom Individuel : Marketplace &amp; Billing</h2>
-            <span class="slide-badge">Présenté par Selim Hechmi (1 min chrono)</span>
-        </div>
-        <div class="slide-body">
-            <div class="row g-3">
-                <div class="col-md-7">
-                    <div class="card-box mb-3" style="border-left-color: #2563eb;">
-                        <h5 class="fw-bold text-primary mb-2">Mission &amp; Entités Métier (Port 8085)</h5>
-                        <p class="small mb-1">Gérer le panier d'achat, les commandes, les paiements sandbox et la génération de factures.</p>
-                        <p class="small mb-0"><strong>Entités JPA :</strong> <code>Order</code>, <code>OrderItem</code>, <code>Payment</code>, <code>Invoice</code>.</p>
-                    </div>
-                    <div class="card p-3 border">
-                        <h6 class="fw-bold mb-2">Contrats d'API REST :</h6>
-                        <ul class="small mb-0 ps-3">
-                            <li><code>POST /api/orders</code> $ightarrow$ <strong>201 Created</strong> (Création de commande)</li>
-                            <li><code>POST /api/orders/{id}/payments</code> $ightarrow$ <strong>201 Created</strong> (Paiement simulé)</li>
-                            <li><code>GET /api/invoices/{id}</code> $ightarrow$ <strong>200 OK</strong> (Téléchargement facture)</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-5">
-                    <div class="card p-3 bg-light border h-100">
-                        <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-bolt me-1"></i>Interaction Asynchrone Clé</h6>
-                        <p class="small text-muted">Dès que le paiement est confirmé, mon microservice émet l'événement :</p>
-                        <div class="p-2 bg-dark text-light rounded small font-monospace mb-2">
-                            PaymentCompleted { orderId, studentId, courseId, amount }
+                    <h1 class="hero-title">LearnHub</h1>
+                    <div class="hero-subtitle">Plateforme Intelligente d'Apprentissage en Ligne</div>
+                    <p style="color: var(--text-muted); max-width: 750px; font-size: 1rem; line-height: 1.5; margin-bottom: 25px;">
+                        Architecture microservices distribuée à 7 services Spring Boot (6 capacités métier + 1 socle commun d'identité), découplage événementiel RabbitMQ et bases de données étanches.
+                    </p>
+                    <div class="card-panel" style="max-width: 680px; width: 100%; text-align: left; background: rgba(15,23,42,0.6);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
+                            <div><strong style="color:var(--text-muted);">Classe :</strong> 4SSA13</div>
+                            <div><strong style="color:var(--text-muted);">Groupe :</strong> G1</div>
+                            <div><strong style="color:var(--text-muted);">Dépôt Git :</strong> <span class="code-pill">salim-hechmi/learnhub-4ssa13-g1</span></div>
+                            <div><strong style="color:var(--text-muted);">Validation :</strong> Séance 4 (Conception validée)</div>
                         </div>
-                        <p class="small text-muted mb-0"><strong>Comportement en cas de panne :</strong> Si le service d'inscription est en panne, le message reste sauvegardé dans RabbitMQ. Le client reçoit son reçu instantanément.</p>
+                        <hr style="border: 0; border-top: 1px solid var(--card-border); margin: 12px 0;">
+                        <div style="font-size: 0.88rem; color: #e2e8f0;">
+                            <span style="color: var(--accent); font-weight: 700;">★ Responsable Marketplace &amp; Billing :</span> <strong>Selim Hechmi</strong> (salim-hechmi)<br>
+                            <span style="color: var(--primary); font-weight: 700;">★ Service Commun :</span> <strong>identity-service</strong> (Développé collectivement)
+                        </div>
                     </div>
                 </div>
+                <footer class="slide-foot">
+                    <span>LearnHub - Validation 1 : Présentation du projet et modélisation microservices</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 1 / 12 (Durée : 20s)</span>
+                </footer>
             </div>
-            <div class="speaker-note">
-                <strong>Speech Individuel de Selim Hechmi (1 min chrono) :</strong> "Bonjour, je suis Selim Hechmi, responsable du microservice Marketplace & Billing. Mon service prend en charge la conversion des cours choisis en commande, le paiement sandbox et la facturation. Ses entités clés sont Order, OrderItem, Payment et Invoice. Mon endpoint principal POST /orders/{id}/payments valide la transaction en 201 Created et publie l'événement PaymentCompleted sur RabbitMQ. Cela garantit un découplage total : même si le service d'inscription subit une panne temporaire, le paiement de l'étudiant est sécurisé et l'inscription sera rejouée sans doublon."
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 9 / 12 (Partie Individuelle)</span>
-        </div>
-    </div>
 
-    <!-- SLIDE 10 : TECHNOLOGIES ET SÉCURITÉ -->
-    <div class="slide" id="slide10">
-        <div class="slide-header">
-            <h2 class="slide-title">9. Stack Technologique &amp; Sécurité</h2>
-            <span class="slide-badge">Choix Techniques Validés</span>
-        </div>
-        <div class="slide-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="card p-3 border-primary h-100">
-                        <h5 class="fw-bold text-primary"><i class="fa-brands fa-java me-2"></i>Backend</h5>
-                        <ul class="small mb-0 ps-3">
-                            <li>Java 17 / 21 LTS</li>
-                            <li>Spring Boot 3.4.x</li>
-                            <li>Spring Data JPA &amp; Hibernate</li>
-                            <li>Springdoc OpenAPI 3.1</li>
-                        </ul>
+            <!-- SLIDE 2 : PROBLÉMATIQUE ET SOLUTION -->
+            <div class="slide-item" id="slide-2">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num">1</div>
+                        <h2 class="slide-title">Problématique Réelle &amp; Solution LearnHub</h2>
+                    </div>
+                    <span class="slide-meta-badge">Vision Métier &amp; Problème Réel</span>
+                </header>
+                <div class="slide-content">
+                    <div class="grid-2">
+                        <div class="card-panel panel-danger">
+                            <h3 class="panel-title" style="color: var(--accent);"><i class="fa-solid fa-triangle-exclamation"></i> Le Problème Réel</h3>
+                            <ul class="feature-list">
+                                <li><i class="fa-solid fa-xmark text-danger"></i> <span><strong>Outils dispersés :</strong> Les apprenants alternent entre plusieurs sites non reliés pour acheter des formations, lire des supports et tenter de passer des tests.</span></li>
+                                <li><i class="fa-solid fa-xmark text-danger"></i> <span><strong>Suivi morcelé :</strong> Aucune vision globale de la progression leçon par leçon et difficulté à cibler ses lacunes en direct.</span></li>
+                                <li><i class="fa-solid fa-xmark text-danger"></i> <span><strong>Isolement de l'apprenant :</strong> Taux d'abandon élevé par manque d'un coach interactif et d'émulation communautaire.</span></li>
+                            </ul>
+                        </div>
+                        <div class="card-panel panel-success">
+                            <h3 class="panel-title" style="color: var(--success);"><i class="fa-solid fa-lightbulb"></i> La Solution LearnHub</h3>
+                            <ul class="feature-list">
+                                <li><i class="fa-solid fa-check text-success"></i> <span><strong>Plateforme Tout-en-Un :</strong> Centralisation de la découverte, du paiement sandbox, du parcours d'apprentissage et de la certification.</span></li>
+                                <li><i class="fa-solid fa-check text-success"></i> <span><strong>Engagement &amp; Avis vérifiés :</strong> Validation dynamique des leçons, quiz notés, badges de réussite et avis réservés aux inscrits.</span></li>
+                                <li><i class="fa-solid fa-check text-success"></i> <span><strong>Coach IA Adaptatif :</strong> Génération de plans de révision personnalisés selon les heures disponibles et tuteur interactif.</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="speaker-drawer">
+                        <i class="fa-solid fa-comment-dots"></i>
+                        <div><strong>Speech Oral (1 min) :</strong> "Aujourd'hui, l'apprentissage en ligne souffre d'un éparpillement des outils. LearnHub résout ce problème en intégrant tout le cycle d'apprentissage dans un écosystème modulaire et hautement résilient grâce à l'architecture microservices."</div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card p-3 border-info h-100">
-                        <h5 class="fw-bold text-info"><i class="fa-solid fa-cloud me-2"></i>Spring Cloud &amp; Bus</h5>
-                        <ul class="small mb-0 ps-3">
-                            <li>Spring Cloud Gateway</li>
-                            <li>Netflix Eureka Discovery</li>
-                            <li>Spring Cloud OpenFeign</li>
-                            <li>RabbitMQ (AMQP 0-9-1)</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card p-3 border-success h-100">
-                        <h5 class="fw-bold text-success"><i class="fa-solid fa-lock me-2"></i>Sécurité &amp; Données</h5>
-                        <ul class="small mb-0 ps-3">
-                            <li>Jetons JWT signés (RSA / HMAC)</li>
-                            <li>Keycloak Identity Provider</li>
-                            <li>Bases : MySQL 8.0 &amp; MongoDB 7.0</li>
-                            <li>Docker &amp; Docker Compose</li>
-                        </ul>
-                    </div>
-                </div>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 2 / 12 (Durée : 1 min)</span>
+                </footer>
             </div>
-            <div class="speaker-note">
-                <strong>Speech Oral (45s) :</strong> "Notre stack technologique repose à 100% sur l'écosystème Spring Boot 3 et Spring Cloud, garantissant une intégration native et une compatibilité industrielle."
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 10 / 12 (Durée : 45s)</span>
-        </div>
-    </div>
 
-    <!-- SLIDE 11 : ORGANISATION GIT ET RÉPARTITION -->
-    <div class="slide" id="slide11">
-        <div class="slide-header">
-            <h2 class="slide-title">10. Organisation Git &amp; Outil de Gestion</h2>
-            <span class="slide-badge">Méthodologie &amp; Travail d'Équipe</span>
-        </div>
-        <div class="slide-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="card-box h-100">
-                        <h5 class="fw-bold text-primary mb-2"><i class="fa-brands fa-github me-2"></i>Structure du Dépôt Public Git</h5>
-                        <pre class="small bg-dark text-light p-2 rounded mb-0">
-learnhub-4ssa13-g1/
-├── Backend/ (7 projets Spring Boot initialisés)
-├── Frontend/ (Application cliente web)
-├── Documentation/
-│   ├── Presentation/ (Diaporama &amp; Guides)
-│   ├── Diagrams/ (Architecture &amp; Classes)
-│   └── Dossier_Technique/
-└── README.md</pre>
+            <!-- SLIDE 3 : ACTEURS ET CAS D'UTILISATION -->
+            <div class="slide-item" id="slide-3">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num">2</div>
+                        <h2 class="slide-title">Acteurs du Système &amp; Cas d'Utilisation</h2>
+                    </div>
+                    <span class="slide-meta-badge">Modélisation UML</span>
+                </header>
+                <div class="slide-content">
+                    <div class="grid-4">
+                        <div class="card-panel panel-primary">
+                            <h4 class="panel-title" style="color: var(--primary); font-size: 1.05rem;"><i class="fa-solid fa-user-graduate"></i> Étudiant</h4>
+                            <ul class="feature-list" style="font-size:0.85rem;">
+                                <li><i class="fa-solid fa-chevron-right text-primary"></i> Consulter / commander cours</li>
+                                <li><i class="fa-solid fa-chevron-right text-primary"></i> Valider les leçons terminées</li>
+                                <li><i class="fa-solid fa-chevron-right text-primary"></i> Passer les quiz d'évaluation</li>
+                                <li><i class="fa-solid fa-chevron-right text-primary"></i> Télécharger les certificats</li>
+                                <li><i class="fa-solid fa-chevron-right text-primary"></i> Poser questions au Coach IA</li>
+                            </ul>
+                        </div>
+                        <div class="card-panel panel-success">
+                            <h4 class="panel-title" style="color: var(--success); font-size: 1.05rem;"><i class="fa-solid fa-chalkboard-user"></i> Formateur</h4>
+                            <ul class="feature-list" style="font-size:0.85rem;">
+                                <li><i class="fa-solid fa-chevron-right text-success"></i> Créer et publier des cours</li>
+                                <li><i class="fa-solid fa-chevron-right text-success"></i> Structurer chapitres et médias</li>
+                                <li><i class="fa-solid fa-chevron-right text-success"></i> Rédiger quiz et questions</li>
+                                <li><i class="fa-solid fa-chevron-right text-success"></i> Répondre aux discussions</li>
+                                <li><i class="fa-solid fa-chevron-right text-success"></i> Analyser les statistiques</li>
+                            </ul>
+                        </div>
+                        <div class="card-panel panel-danger">
+                            <h4 class="panel-title" style="color: var(--accent); font-size: 1.05rem;"><i class="fa-solid fa-user-shield"></i> Administrateur</h4>
+                            <ul class="feature-list" style="font-size:0.85rem;">
+                                <li><i class="fa-solid fa-chevron-right text-danger"></i> Gérer utilisateurs et rôles</li>
+                                <li><i class="fa-solid fa-chevron-right text-danger"></i> Modérer les avis et messages</li>
+                                <li><i class="fa-solid fa-chevron-right text-danger"></i> Administrer les catégories</li>
+                                <li><i class="fa-solid fa-chevron-right text-danger"></i> Superviser l'écosystème</li>
+                            </ul>
+                        </div>
+                        <div class="card-panel panel-warning">
+                            <h4 class="panel-title" style="color: var(--warning); font-size: 1.05rem;"><i class="fa-solid fa-plug"></i> Systèmes Externes</h4>
+                            <ul class="feature-list" style="font-size:0.85rem;">
+                                <li><i class="fa-solid fa-chevron-right text-warning"></i> Passerelle paiement Sandbox</li>
+                                <li><i class="fa-solid fa-chevron-right text-warning"></i> API de Modèle IA (NLP)</li>
+                                <li><i class="fa-solid fa-chevron-right text-warning"></i> Serveur Keycloak (JWT)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="speaker-drawer">
+                        <i class="fa-solid fa-comment-dots"></i>
+                        <div><strong>Speech Oral (1 min) :</strong> "Nous distinguons 3 acteurs métier humains et 2 services externes. Le diagramme de cas d'utilisation complet est disponible dans notre dossier technique et dans Documentation/Diagrams/cas_utilisation_global.svg."</div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="card-box h-100" style="border-left-color: #8b5cf6;">
-                        <h5 class="fw-bold text-purple mb-2"><i class="fa-solid fa-code-branch me-2"></i>Stratégie Git &amp; Suivi</h5>
-                        <ul class="small ps-3 mb-2">
-                            <li><strong>Convention GitFlow :</strong> Branche <code>main</code> protégée, branche <code>develop</code> pour l'intégration, et branches individuelles par responsable (ex: <code>feature/SELIM-marketplace</code>).</li>
-                            <li><strong>Commits individuels réguliers :</strong> Traçabilité des contributions de chaque membre.</li>
-                            <li><strong>Outil de suivi :</strong> GitHub Projects / Trello avec colonnes Kanban (À faire, En cours, Revue, Terminé).</li>
-                        </ul>
-                    </div>
-                </div>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 3 / 12 (Durée : 1 min)</span>
+                </footer>
             </div>
-            <div class="speaker-note">
-                <strong>Speech Oral (1 min) :</strong> "L'enseignant est invité en tant que collaborateur du dépôt. Chaque membre a initialisé son microservice sur sa propre branche avec des commits traçables."
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 11 / 12 (Durée : 1 min)</span>
-        </div>
-    </div>
 
-    <!-- SLIDE 12 : PLANNING, RISQUES ET CONCLUSION -->
-    <div class="slide" id="slide12">
-        <div class="slide-header">
-            <h2 class="slide-title">11. Planning, Risques &amp; Conclusion</h2>
-            <span class="slide-badge">Jalons &amp; Synthèse</span>
-        </div>
-        <div class="slide-body">
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <div class="card p-3 border">
-                        <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-calendar-check me-2"></i>Planning Prévisionnel</h6>
-                        <ol class="small mb-0 ps-3">
-                            <li><strong>Validation 1 (Actuelle) :</strong> Conception, Bounded Contexts et contrats validés.</li>
-                            <li><strong>Phase 2 :</strong> Développement de la logique métier par microservice.</li>
-                            <li><strong>Phase 3 :</strong> Intégration Gateway, Eureka, RabbitMQ &amp; Sécurité JWT.</li>
-                            <li><strong>Phase 4 :</strong> Tests d'intégration de bout en bout et démo finale.</li>
-                        </ol>
+            <!-- SLIDE 4 : SCÉNARIO TRANSVERSAL -->
+            <div class="slide-item" id="slide-4">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num">3</div>
+                        <h2 class="slide-title">Scénario Métier Principal Transversal</h2>
+                    </div>
+                    <span class="slide-meta-badge">Cycle Complet de l'Étudiant</span>
+                </header>
+                <div class="slide-content">
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 14px;">
+                        <div class="card-panel" style="padding:14px; text-align:center;">
+                            <span class="code-pill">1. Connexion</span>
+                            <div style="font-weight:700; margin:6px 0; font-size:0.92rem;">identity-service</div>
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Jeton JWT émis</small>
+                        </div>
+                        <div class="card-panel" style="padding:14px; text-align:center;">
+                            <span class="code-pill">2. Catalogue</span>
+                            <div style="font-weight:700; margin:6px 0; font-size:0.92rem;">course-service</div>
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Choix de la formation</small>
+                        </div>
+                        <div class="card-panel panel-primary" style="padding:14px; text-align:center;">
+                            <span class="code-pill" style="color:#60a5fa;">3. Paiement</span>
+                            <div style="font-weight:700; margin:6px 0; font-size:0.92rem;">marketplace</div>
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Validation Sandbox</small>
+                        </div>
+                        <div class="card-panel panel-danger" style="padding:14px; text-align:center; background:rgba(225,29,72,0.1);">
+                            <span class="code-pill" style="color:var(--accent);">4. RabbitMQ ⚡</span>
+                            <div style="font-weight:700; margin:6px 0; font-size:0.85rem; color:#fca5a5;">PaymentCompleted</div>
+                            <small style="color:#fecdd3; font-size:0.72rem;">Événement asynchrone</small>
+                        </div>
+                        <div class="card-panel panel-success" style="padding:14px; text-align:center;">
+                            <span class="code-pill" style="color:#34d399;">5. Inscription</span>
+                            <div style="font-weight:700; margin:6px 0; font-size:0.92rem;">learning-journey</div>
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Enrollment auto</small>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+                        <div class="card-panel" style="padding:14px; text-align:center;">
+                            <span class="code-pill">6. Apprentissage</span>
+                            <div style="font-weight:700; margin:6px 0; font-size:0.92rem;">learning-journey</div>
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Complétion des leçons</small>
+                        </div>
+                        <div class="card-panel panel-purple" style="padding:14px; text-align:center;">
+                            <span class="code-pill" style="color:#c084fc;">7. Coach IA</span>
+                            <div style="font-weight:700; margin:6px 0; font-size:0.92rem;">ai-coach-service</div>
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Planning personnalisé</small>
+                        </div>
+                        <div class="card-panel" style="padding:14px; text-align:center;">
+                            <span class="code-pill">8. Quiz Certifiant</span>
+                            <div style="font-weight:700; margin:6px 0; font-size:0.92rem;">assessment-service</div>
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Score calculé &amp; diplôme</small>
+                        </div>
+                        <div class="card-panel" style="padding:14px; text-align:center;">
+                            <span class="code-pill">9. Badge &amp; Avis</span>
+                            <div style="font-weight:700; margin:6px 0; font-size:0.92rem;">community-service</div>
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Avis vérifié déposé</small>
+                        </div>
+                    </div>
+                    <div class="speaker-drawer">
+                        <i class="fa-solid fa-comment-dots"></i>
+                        <div><strong>Speech Oral (45s) :</strong> "Ce scénario illustre l'interaction de bout en bout : dès validation du paiement dans Marketplace, RabbitMQ déclenche l'inscription dans Journey sans bloquer l'acheteur. L'étudiant apprend, passe son quiz, reçoit son certificat et publie son avis."</div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="card p-3 border">
-                        <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-shield-halved me-2"></i>Gestion des Risques &amp; Mesures</h6>
-                        <ul class="small mb-0 ps-3">
-                            <li><em>Risque :</em> Incompatibilité des contrats d'API $ightarrow$ <strong>Mesure :</strong> DTOs et événements figés en amont.</li>
-                            <li><em>Risque :</em> Indisponibilité d'un service $ightarrow$ <strong>Mesure :</strong> Circuit Breaker &amp; file RabbitMQ.</li>
-                            <li><em>Risque :</em> Complexité de l'IA $ightarrow$ <strong>Mesure :</strong> Recommandations basées sur règles puis API NLP.</li>
-                        </ul>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 4 / 12 (Durée : 45s)</span>
+                </footer>
+            </div>
+
+            <!-- SLIDE 5 : DÉCOUPAGE EN 7 MICROSERVICES -->
+            <div class="slide-item" id="slide-5">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num">4</div>
+                        <h2 class="slide-title">Découpage en Microservices (Bounded Contexts DDD)</h2>
+                    </div>
+                    <span class="slide-meta-badge">Domain-Driven Design</span>
+                </header>
+                <div class="slide-content">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>N°</th>
+                                <th>Microservice</th>
+                                <th>Port</th>
+                                <th>Capacité Métier (Responsabilité)</th>
+                                <th>Entités Clés</th>
+                                <th>Base Dédiée</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0</td>
+                                <td><strong>identity-service</strong> (Commun)</td>
+                                <td><span class="code-pill">8081</span></td>
+                                <td>Gestion des comptes, profils, rôles (Admin/Formateur/Étudiant) et JWT</td>
+                                <td>User, Role, UserProfile, Permission</td>
+                                <td>MySQL</td>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td><strong>course-service</strong></td>
+                                <td><span class="code-pill">8082</span></td>
+                                <td>Catalogue officiel, gestion et publication des cours, chapitres et médias</td>
+                                <td>Course, Category, Chapter, Resource</td>
+                                <td>MySQL</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><strong>learning-journey-service</strong></td>
+                                <td><span class="code-pill">8083</span></td>
+                                <td>Inscriptions aux cours, suivi de la progression et leçons validées</td>
+                                <td>Enrollment, Progress, LessonDone</td>
+                                <td>MySQL</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><strong>assessment-service</strong></td>
+                                <td><span class="code-pill">8084</span></td>
+                                <td>Quiz, questions, tentatives, calcul des scores et diplômes</td>
+                                <td>Quiz, Question, StudentAttempt, Certif</td>
+                                <td>MySQL</td>
+                            </tr>
+                            <tr class="highlight">
+                                <td>4</td>
+                                <td><strong>marketplace-service</strong> (Selim)</td>
+                                <td><span class="code-pill">8085</span></td>
+                                <td>Paniers, commandes, paiements sandbox et facturation numérique</td>
+                                <td>Order, OrderItem, Payment, Invoice</td>
+                                <td>MySQL</td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td><strong>community-service</strong></td>
+                                <td><span class="code-pill">8086</span></td>
+                                <td>Avis vérifiés sur les cours, fils de discussion et badges d'engagement</td>
+                                <td>CourseReview, Thread, Post, Badge</td>
+                                <td>MongoDB</td>
+                            </tr>
+                            <tr style="background: rgba(147, 51, 234, 0.1);">
+                                <td>6</td>
+                                <td><strong>ai-learning-coach-service</strong> (IA)</td>
+                                <td><span class="code-pill">8087</span></td>
+                                <td>Plans d'étude sur mesure selon la disponibilité et tuteur conversationnel</td>
+                                <td>StudyPlan, Recommendation, Chat</td>
+                                <td>MongoDB</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="speaker-drawer">
+                        <i class="fa-solid fa-comment-dots"></i>
+                        <div><strong>Speech Oral (1 min) :</strong> "Nous respectons rigoureusement la directive de l'enseignant : pas de découpage par table ni par écran. Chaque service représente une capacité métier étanche avec sa propre base de données."</div>
                     </div>
                 </div>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 5 / 12 (Durée : 1 min)</span>
+                </footer>
             </div>
-            <div class="p-3 bg-primary text-white rounded text-center">
-                <h5 class="fw-bold mb-1">Conclusion</h5>
-                <p class="small mb-0">LearnHub dispose d'une conception éprouvée, équilibrée entre les membres et d'un périmètre réaliste, prête pour le démarrage du développement métier !</p>
-            </div>
-            <div class="speaker-note">
-                <strong>Speech Oral (45s) :</strong> "En conclusion, LearnHub offre une architecture modulaire, résiliente et évolutive. Notre conception est saine et nos contrats sont définis. Nous sommes prêts pour vos questions !"
-            </div>
-        </div>
-        <div class="slide-footer">
-            <span>LearnHub AWD - Validation 1</span>
-            <span>Slide 12 / 12 (Durée : 45s)</span>
-        </div>
-    </div>
 
-</div>
+            <!-- SLIDE 6 : ARCHITECTURE TECHNIQUE GLOBALE -->
+            <div class="slide-item" id="slide-6">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num">5</div>
+                        <h2 class="slide-title">Architecture Technique Globale AWD</h2>
+                    </div>
+                    <span class="slide-meta-badge">Spring Cloud &amp; Docker</span>
+                </header>
+                <div class="slide-content">
+                    <div class="grid-3" style="margin-bottom: 16px;">
+                        <div class="card-panel panel-primary">
+                            <h4 class="panel-title" style="color:var(--primary); font-size:1rem;"><i class="fa-solid fa-desktop"></i> Client Web Frontend</h4>
+                            <p style="font-size:0.85rem; color:var(--text-muted);">Application cliente réactive (Port 3000) consommant exclusivement l'API Gateway.</p>
+                        </div>
+                        <div class="card-panel panel-primary">
+                            <h4 class="panel-title" style="color:var(--primary); font-size:1rem;"><i class="fa-solid fa-shield-halved"></i> API Gateway (:8080)</h4>
+                            <p style="font-size:0.85rem; color:var(--text-muted);">Point d'entrée unique, filtrage des requêtes, CORS et validation des jetons JWT.</p>
+                        </div>
+                        <div class="card-panel panel-purple">
+                            <h4 class="panel-title" style="color:var(--purple); font-size:1rem;"><i class="fa-solid fa-network-wired"></i> Eureka Server (:8761)</h4>
+                            <p style="font-size:0.85rem; color:var(--text-muted);">Service Discovery pour enregistrement dynamique sans adresses IP en dur.</p>
+                        </div>
+                    </div>
 
+                    <div class="card-panel" style="padding:16px; margin-bottom:16px; background:rgba(15,23,42,0.7);">
+                        <div style="font-weight:700; font-size:0.95rem; margin-bottom:10px; color:#fff;">
+                            <i class="fa-solid fa-cubes text-primary me-2"></i> Couche Métier : 7 Microservices Spring Boot &amp; Bases Dédiées
+                        </div>
+                        <div style="display:flex; justify-content:space-between; gap:8px;">
+                            <div class="code-pill" style="flex:1; text-align:center;">identity (:8081)<br><small style="color:var(--text-muted);">MySQL</small></div>
+                            <div class="code-pill" style="flex:1; text-align:center;">course (:8082)<br><small style="color:var(--text-muted);">MySQL</small></div>
+                            <div class="code-pill" style="flex:1; text-align:center;">journey (:8083)<br><small style="color:var(--text-muted);">MySQL</small></div>
+                            <div class="code-pill" style="flex:1; text-align:center;">assessment (:8084)<br><small style="color:var(--text-muted);">MySQL</small></div>
+                            <div class="code-pill" style="flex:1; text-align:center; border-color:var(--primary); color:#60a5fa; font-weight:700;">marketplace (:8085)<br><small style="color:#93c5fd;">MySQL (Selim)</small></div>
+                            <div class="code-pill" style="flex:1; text-align:center;">community (:8086)<br><small style="color:var(--text-muted);">MongoDB</small></div>
+                            <div class="code-pill" style="flex:1; text-align:center; border-color:var(--purple); color:#c084fc;">ai-coach (:8087)<br><small style="color:#d8b4fe;">MongoDB (IA)</small></div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card-panel panel-danger" style="padding:14px;">
+                            <div style="font-weight:700; color:var(--accent); font-size:0.9rem; margin-bottom:4px;"><i class="fa-solid fa-bolt me-1"></i> RabbitMQ (:5672)</div>
+                            <div style="font-size:0.82rem; color:var(--text-muted);">Broker AMQP pour diffusion d'événements asynchrones non-bloquants.</div>
+                        </div>
+                        <div class="card-panel panel-success" style="padding:14px;">
+                            <div style="font-weight:700; color:var(--success); font-size:0.9rem; margin-bottom:4px;"><i class="fa-solid fa-box me-1"></i> Docker &amp; Compose</div>
+                            <div style="font-size:0.82rem; color:var(--text-muted);">Conteneurisation uniforme de l'ensemble des bases et composants.</div>
+                        </div>
+                    </div>
+                </div>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 6 / 12 (Durée : 1 min)</span>
+                </footer>
+            </div>
+
+            <!-- SLIDE 7 : DONNÉES ET BASES (DATABASE-PER-SERVICE) -->
+            <div class="slide-item" id="slide-7">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num">6</div>
+                        <h2 class="slide-title">Données &amp; Bases Dédiées (Database-per-Service)</h2>
+                    </div>
+                    <span class="slide-meta-badge">Isolation des Données</span>
+                </header>
+                <div class="slide-content">
+                    <div class="card-panel panel-success" style="margin-bottom: 16px;">
+                        <h4 class="panel-title" style="color: var(--success); font-size: 1.05rem;"><i class="fa-solid fa-lock"></i> Règle d'or AWD : Aucune Base de Données Partagée</h4>
+                        <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.45;">
+                            Chaque microservice est propriétaire exclusif de son schéma. Pour faire référence à une entité externe, on stocke un identifiant distant simple (<span class="code-pill">courseId</span>, <span class="code-pill">studentId</span>). Aucune liaison JPA @ManyToOne inter-bases n'est permise.
+                        </p>
+                    </div>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Microservice</th>
+                                <th>Technologie</th>
+                                <th>Justification AWD du Choix de Base</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Identity</strong></td><td><span class="code-pill">MySQL</span></td><td>Données structurées : utilisateurs, profils, permissions et rôles.</td></tr>
+                            <tr><td><strong>Course</strong></td><td><span class="code-pill">MySQL</span></td><td>Relations claires : catégories, cours, chapitres et ressources.</td></tr>
+                            <tr><td><strong>Journey</strong></td><td><span class="code-pill">MySQL</span></td><td>Contraintes relationnelles : inscriptions et complétion des leçons.</td></tr>
+                            <tr><td><strong>Assessment</strong></td><td><span class="code-pill">MySQL</span></td><td>Relations fortes : quiz, banques de questions, scores et certificats.</td></tr>
+                            <tr class="highlight"><td><strong>Marketplace (Selim)</strong></td><td><span class="code-pill">MySQL</span></td><td><strong>Cohérence transactionnelle stricte (ACID)</strong> pour commandes et factures.</td></tr>
+                            <tr><td><strong>Community</strong></td><td><span class="code-pill">MongoDB</span></td><td>Fils de discussion imbriqués et structure NoSQL flexible.</td></tr>
+                            <tr><td><strong>AI Learning Coach</strong></td><td><span class="code-pill">MongoDB</span></td><td>Documents JSON dynamiques pour plannings générés et messages de chat.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 7 / 12 (Durée : 45s)</span>
+                </footer>
+            </div>
+
+            <!-- SLIDE 8 : COMMUNICATIONS SYNCHRONES VS ASYNCHRONES -->
+            <div class="slide-item" id="slide-8">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num">7</div>
+                        <h2 class="slide-title">Communications Interservices : Feign vs RabbitMQ</h2>
+                    </div>
+                    <span class="slide-meta-badge">Résilience &amp; Événements</span>
+                </header>
+                <div class="slide-content">
+                    <div class="grid-2">
+                        <div class="card-panel panel-success">
+                            <h3 class="panel-title" style="color: var(--success);"><i class="fa-solid fa-arrows-rotate"></i> Synchrone : OpenFeign</h3>
+                            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Réponse immédiate indispensable en lecture avant de valider l'action.</p>
+                            <ul class="feature-list" style="font-size:0.85rem;">
+                                <li><i class="fa-solid fa-check text-success"></i> <span><code>Community ➔ Journey :</code> Vérifier l'inscription avant d'accepter un avis.</span></li>
+                                <li><i class="fa-solid fa-check text-success"></i> <span><code>Journey ➔ Course :</code> Vérifier l'existence et la publication d'un cours.</span></li>
+                                <li><i class="fa-solid fa-check text-success"></i> <span><code>Coach IA ➔ Journey &amp; Assessment :</code> Collecter progrès et notes pour le plan d'étude.</span></li>
+                            </ul>
+                            <div style="margin-top:12px; font-size:0.8rem; background:rgba(16,185,129,0.1); padding:6px 10px; border-radius:6px; color:#6ee7b7;">
+                                🛡️ Résilience : Timeout 2s + Réponse 503 Service Unavailable
+                            </div>
+                        </div>
+
+                        <div class="card-panel panel-danger">
+                            <h3 class="panel-title" style="color: var(--accent);"><i class="fa-solid fa-envelope"></i> Asynchrone : RabbitMQ</h3>
+                            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Événements métier traités en arrière-plan sans bloquer l'utilisateur.</p>
+                            <ul class="feature-list" style="font-size:0.85rem;">
+                                <li><i class="fa-solid fa-bolt text-danger"></i> <span><strong>PaymentCompleted :</strong> Marketplace émet après paiement test ➔ Journey crée l'inscription.</span></li>
+                                <li><i class="fa-solid fa-bolt text-danger"></i> <span><strong>ReviewPosted :</strong> Community émet ➔ Course recalcule la note moyenne.</span></li>
+                                <li><i class="fa-solid fa-bolt text-danger"></i> <span><strong>CertificateIssued :</strong> Assessment émet ➔ Community débloque un badge.</span></li>
+                            </ul>
+                            <div style="margin-top:12px; font-size:0.8rem; background:rgba(225,29,72,0.1); padding:6px 10px; border-radius:6px; color:#fca5a5;">
+                                🛡️ Résilience : Persistance en file + Retry + Dead-Letter Queue (DLQ)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 8 / 12 (Durée : 1 min)</span>
+                </footer>
+            </div>
+
+            <!-- SLIDE 9 : ZOOM PAR MICROSERVICE (SELIM HECHMI) -->
+            <div class="slide-item" id="slide-9">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num" style="background:var(--accent);">★</div>
+                        <h2 class="slide-title">Zoom Individuel : Marketplace &amp; Billing (Port 8085)</h2>
+                    </div>
+                    <span class="slide-meta-badge" style="color:var(--accent); font-weight:700;">Speech Selim Hechmi (1 min chrono)</span>
+                </header>
+                <div class="slide-content">
+                    <div class="grid-2">
+                        <div class="card-panel panel-primary">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <h3 class="panel-title" style="color:#60a5fa; margin:0;"><i class="fa-solid fa-user-check"></i> Selim Hechmi</h3>
+                                <span class="code-pill">Port 8085</span>
+                            </div>
+                            <div style="font-size:0.88rem; color:#cbd5e1; margin-bottom:12px;">
+                                <strong>Mission :</strong> Gestion des paniers, commandes de cours, paiements sandbox et facturation numérique.
+                            </div>
+                            <div style="font-size:0.85rem; color:#94a3b8; margin-bottom:8px;"><strong>Entités JPA Dédiées :</strong></div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.82rem; margin-bottom:12px;">
+                                <div class="code-pill">Order (id, studentId, total)</div>
+                                <div class="code-pill">OrderItem (id, courseId)</div>
+                                <div class="code-pill">Payment (id, transactionId)</div>
+                                <div class="code-pill">Invoice (id, invoiceNumber)</div>
+                            </div>
+                            <div style="font-size:0.82rem; color:#94a3b8;"><strong>Base de données :</strong> MySQL (learnhub_marketplace_db)</div>
+                        </div>
+
+                        <div class="card-panel panel-danger">
+                            <h3 class="panel-title" style="color:var(--accent);"><i class="fa-solid fa-code"></i> Contrats d'API &amp; Événements</h3>
+                            <ul class="feature-list" style="font-size:0.85rem; margin-bottom:14px;">
+                                <li><code>POST /api/orders</code> ➔ <span class="status-pill status-201">201 Created</span> (Créer commande)</li>
+                                <li><code>POST /api/orders/{id}/payments</code> ➔ <span class="status-pill status-201">201 Created</span> (Paiement test)</li>
+                                <li><code>GET /api/invoices/{id}</code> ➔ <span class="status-pill status-200">200 OK</span> (Télécharger facture)</li>
+                            </ul>
+                            <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(225,29,72,0.3); border-radius:8px; padding:10px;">
+                                <div style="font-weight:700; color:#fca5a5; font-size:0.82rem; margin-bottom:4px;">Événement RabbitMQ publié :</div>
+                                <code style="font-size:0.75rem; color:#cbd5e1;">PaymentCompleted { orderId, studentId, courseId, amount }</code>
+                                <div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">
+                                    Découplage absolu : l'inscription est créée en tâche de fond de manière idempotente.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="speaker-drawer" style="background:rgba(37,99,235,0.1); border-color:var(--primary); color:#bfdbfe;">
+                        <i class="fa-solid fa-microphone text-primary"></i>
+                        <div><strong>Speech de Selim Hechmi (1 min) :</strong> "Bonjour, je suis Selim Hechmi, responsable du microservice Marketplace & Billing. Mon service gère les commandes, paiements sandbox et factures avec émission de PaymentCompleted sur RabbitMQ. Si le service Journey est en panne, le message reste stocké dans la file sans bloquer l'acheteur."</div>
+                    </div>
+                </div>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 9 / 12 (Partie Individuelle)</span>
+                </footer>
+            </div>
+
+            <!-- SLIDE 10 : TECHNOLOGIES ET SÉCURITÉ -->
+            <div class="slide-item" id="slide-10">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num">9</div>
+                        <h2 class="slide-title">Stack Technologique &amp; Sécurité Globale</h2>
+                    </div>
+                    <span class="slide-meta-badge">Conformité AWD</span>
+                </header>
+                <div class="slide-content">
+                    <div class="grid-4" style="margin-bottom: 16px;">
+                        <div class="card-panel panel-primary">
+                            <h4 class="panel-title" style="color:var(--primary); font-size:0.95rem;"><i class="fa-brands fa-java"></i> Backend</h4>
+                            <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.4;">• Java 17 LTS / 21<br>• Spring Boot 3.4.x<br>• Spring Data JPA<br>• Springdoc OpenAPI 3.1</p>
+                        </div>
+                        <div class="card-panel panel-purple">
+                            <h4 class="panel-title" style="color:var(--purple); font-size:0.95rem;"><i class="fa-solid fa-cloud"></i> Spring Cloud</h4>
+                            <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.4;">• Cloud Gateway<br>• Netflix Eureka<br>• OpenFeign<br>• Resilience4j Circuit Breaker</p>
+                        </div>
+                        <div class="card-panel panel-success">
+                            <h4 class="panel-title" style="color:var(--success); font-size:0.95rem;"><i class="fa-solid fa-database"></i> Données</h4>
+                            <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.4;">• MySQL 8.0 (5 bases)<br>• MongoDB 7.0 (2 bases)<br>• H2 Database (mode dev)<br>• RabbitMQ (AMQP)</p>
+                        </div>
+                        <div class="card-panel panel-danger">
+                            <h4 class="panel-title" style="color:var(--accent); font-size:0.95rem;"><i class="fa-solid fa-lock"></i> Sécurité</h4>
+                            <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.4;">• Jetons JWT Stateless<br>• Keycloak Provider<br>• RBAC (Étudiant, Formateur, Admin)<br>• Docker Compose</p>
+                        </div>
+                    </div>
+
+                    <div class="card-panel" style="padding:14px; background:rgba(15,23,42,0.8);">
+                        <div style="font-size:0.88rem; color:#cbd5e1; text-align:center;">
+                            <strong>Mécanisme Stateless :</strong> L'authentification sur <code>identity-service</code> émet un jeton JWT contenant rôles et permissions. Chaque microservice valide la signature cryptographique localement sans re-solliciter le serveur d'identité.
+                        </div>
+                    </div>
+                </div>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 10 / 12 (Durée : 45s)</span>
+                </footer>
+            </div>
+
+            <!-- SLIDE 11 : ORGANISATION GIT ET SUIVI -->
+            <div class="slide-item" id="slide-11">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num">10</div>
+                        <h2 class="slide-title">Organisation du Dépôt Git &amp; Gestion de Projet</h2>
+                    </div>
+                    <span class="slide-meta-badge">Collaboration &amp; Suivi</span>
+                </header>
+                <div class="slide-content">
+                    <div class="grid-2">
+                        <div class="card-panel" style="background:#000; border-color:#334155; font-family:'JetBrains Mono', monospace; font-size:0.75rem; color:#f8fafc; line-height:1.45;">
+                            <span style="color:#60a5fa;">learnhub-4ssa13-g1/</span><br>
+                            ├── <span style="color:#34d399;">Backend/</span> (7 microservices initialisés)<br>
+                            │   ├── identity-service/ (Commun :8081)<br>
+                            │   ├── course-service/ (:8082)<br>
+                            │   ├── learning-journey-service/ (:8083)<br>
+                            │   ├── assessment-service/ (:8084)<br>
+                            │   ├── marketplace-service/ (:8085 Selim)<br>
+                            │   ├── community-service/ (:8086)<br>
+                            │   └── ai-learning-coach-service/ (:8087)<br>
+                            ├── <span style="color:#60a5fa;">Frontend/</span> (Application cliente :3000)<br>
+                            ├── <span style="color:#f59e0b;">Documentation/</span><br>
+                            │   ├── Presentation/ (Diaporama &amp; Guides)<br>
+                            │   ├── Diagrams/ (Architecture &amp; Classes)<br>
+                            │   └── Dossier_Technique/<br>
+                            └── README.md &amp; docker-compose.yml
+                        </div>
+
+                        <div class="card-panel panel-purple">
+                            <h3 class="panel-title" style="color:var(--purple);"><i class="fa-solid fa-code-branch"></i> Convention GitFlow &amp; Kanban</h3>
+                            <ul class="feature-list" style="font-size:0.86rem;">
+                                <li><i class="fa-solid fa-check text-purple"></i> <span><strong>Branche main :</strong> Version validée pour la soutenance.</span></li>
+                                <li><i class="fa-solid fa-check text-purple"></i> <span><strong>Branche feature/SELIM-marketplace :</strong> Commits personnels réguliers pour le critère I3.</span></li>
+                                <li><i class="fa-solid fa-check text-purple"></i> <span><strong>Tableau de bord Kanban :</strong> Suivi des user stories sous GitHub Projects / Trello.</span></li>
+                                <li><i class="fa-solid fa-check text-purple"></i> <span><strong>Enseignant invité :</strong> Ajouté en tant que collaborateur du dépôt public.</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 11 / 12 (Durée : 1 min)</span>
+                </footer>
+            </div>
+
+            <!-- SLIDE 12 : PLANNING, RISQUES ET CONCLUSION -->
+            <div class="slide-item" id="slide-12">
+                <header class="slide-head">
+                    <div class="slide-title-wrapper">
+                        <div class="slide-badge-num">11</div>
+                        <h2 class="slide-title">Planning Prévisionnel, Risques &amp; Conclusion</h2>
+                    </div>
+                    <span class="slide-meta-badge">Synthèse Finale</span>
+                </header>
+                <div class="slide-content">
+                    <div class="grid-2" style="margin-bottom: 16px;">
+                        <div class="card-panel panel-primary">
+                            <h4 class="panel-title" style="color:var(--primary); font-size:0.95rem;"><i class="fa-solid fa-calendar-check"></i> Planning Prévisionnel</h4>
+                            <ol style="font-size:0.82rem; color:#cbd5e1; padding-left:18px; line-height:1.45;">
+                                <li><strong>Validation 1 (Actuelle) :</strong> Bounded Contexts et contrats validés.</li>
+                                <li><strong>Semaines 5-6 :</strong> Développement de la logique métier de chaque service.</li>
+                                <li><strong>Semaines 7-8 :</strong> Intégration Gateway, Eureka, RabbitMQ et JWT.</li>
+                                <li><strong>Semaines 9-10 :</strong> Connexion Frontend et tests de bout en bout.</li>
+                            </ol>
+                        </div>
+                        <div class="card-panel panel-danger">
+                            <h4 class="panel-title" style="color:var(--accent); font-size:0.95rem;"><i class="fa-solid fa-shield-halved"></i> Gestion des Risques &amp; Mesures</h4>
+                            <ul class="feature-list" style="font-size:0.82rem;">
+                                <li><i class="fa-solid fa-chevron-right text-danger"></i> <span><em>Contrats incompatibles :</em> DTOs et événements figés dès la V1.</span></li>
+                                <li><i class="fa-solid fa-chevron-right text-danger"></i> <span><em>Panne d'un service :</em> Circuit Breaker (503) et files RabbitMQ.</span></li>
+                                <li><i class="fa-solid fa-chevron-right text-danger"></i> <span><em>Complexité IA :</em> Heuristique simple d'abord, puis API NLP externe.</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card-panel panel-primary" style="background:linear-gradient(135deg, rgba(37,99,235,0.2) 0%, rgba(147,51,234,0.2) 100%); border-color:var(--primary); padding:16px; text-align:center;">
+                        <div style="font-weight:800; font-size:0.95rem; color:#60a5fa; margin-bottom:6px;">CONCLUSION OFFICIELLE</div>
+                        <div style="font-size:0.88rem; color:#f8fafc; font-style:italic; line-height:1.45;">
+                            « LearnHub offre une expérience d'apprentissage complète : de la découverte d'un cours à la certification et l'échange communautaire, avec un accompagnement IA personnalisé. Notre architecture garantit l'étanchéité des données et l'autonomie de chaque service. Notre conception est prête pour le développement. Merci de votre attention ! »
+                        </div>
+                    </div>
+                </div>
+                <footer class="slide-foot">
+                    <span>LearnHub AWD - Validation 1</span>
+                    <span style="color: #60a5fa; font-weight: 600;">Slide 12 / 12 (Durée : 45s)</span>
+                </footer>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 12;
+
+        function showSlide(index) {
+            if (index < 1) index = 1;
+            if (index > totalSlides) index = totalSlides;
+            currentSlide = index;
+
+            document.querySelectorAll('.slide-item').forEach((el, i) => {
+                el.classList.toggle('active', i + 1 === currentSlide);
+            });
+
+            document.getElementById('slideIndicator').innerText = currentSlide + ' / ' + totalSlides;
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        // Navigation Clavier (Flèche Droite, Flèche Gauche, Espace)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            } else if (e.key.toLowerCase() === 'f') {
+                toggleFullscreen();
+            }
+        });
+    </script>
 </body>
 </html>
