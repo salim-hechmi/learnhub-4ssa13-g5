@@ -29,3 +29,9 @@ mvn clean spring-boot:run
 | `POST` | `/api/orders/{id}/payments` | `201` | Effectuer un paiement simul√© et d√©clencher l √©v√©nement PaymentCompleted |
 | `GET` | `/api/payments/{id}` | `200` | Consulter le re√ßu d un paiement |
 | `GET` | `/api/invoices/{id}` | `200` | T√©l√©charger la facture associ√©e √† une commande |
+
+## ?? Contribution Personnelle - Selim Hechmi
+- Conception intÈgrale du Bounded Context Marketplace & Billing
+- EntitÈs Order, OrderItem, Payment, Invoice
+- …mission de l'ÈvÈnement asynchrone RabbitMQ PaymentCompleted
+- ImplÈmentation du contrÙleur REST MarketplaceController avec codes HTTP 201 Created et 200 OK
