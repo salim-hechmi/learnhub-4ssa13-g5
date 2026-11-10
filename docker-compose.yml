@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # Base de données MySQL pour identity-service
+  identity-db:
+    image: mysql:8.0
+    container_name: learnhub-identity-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: learnhub_identity_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - identity_data:/var/lib/mysql
+
+  # Base de données MySQL pour course-service
+  course-db:
+    image: mysql:8.0
+    container_name: learnhub-course-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: learnhub_course_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - course_data:/var/lib/mysql
+
+  # Base de données MySQL pour learning-journey-service
+  journey-db:
+    image: mysql:8.0
+    container_name: learnhub-journey-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: learnhub_journey_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - journey_data:/var/lib/mysql
+
+  # Base de données MySQL pour assessment-service
+  assessment-db:
+    image: mysql:8.0
+    container_name: learnhub-assessment-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: learnhub_assessment_db
+    ports:
+      - "3309:3306"
+    volumes:
+      - assessment_data:/var/lib/mysql
+
+  # Base de données MySQL pour marketplace-service
+  marketplace-db:
+    image: mysql:8.0
+    container_name: learnhub-marketplace-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: learnhub_marketplace_db
+    ports:
+      - "3310:3306"
+    volumes:
+      - marketplace_data:/var/lib/mysql
+
+  # Base de données MongoDB pour community & ai-coach
+  learnhub-mongo:
+    image: mongo:7.0
+    container_name: learnhub-nosql-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # Broker de messages RabbitMQ pour communications asynchrones
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: learnhub-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  # Serveur de gestion d'identité Keycloak
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: learnhub-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+
+volumes:
+  identity_data:
+  course_data:
+  journey_data:
+  assessment_data:
+  marketplace_data:
+  mongo_data:
