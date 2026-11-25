@@ -9,7 +9,7 @@
 > **Projet Académique ESPRIT – Année Universitaire 2026/2027**  
 > **Module :** Architecture des Applications Web Distribuées (AWD)  
 > **Classe :** 4SSA13 &nbsp;|&nbsp; **Groupe :** G1  
-> **Validation 1 :** Présentation du projet et modélisation microservices (Semaine Séance 4)
+> **Validation 1 :** Présentation du projet et modélisation microservices 
 
 ---
 
@@ -21,8 +21,8 @@
 | **Nawres SOUA** | **`course-service`** | Catalogue officiel, cours, chapitres hiérarchisés et ressources pédagogiques | MySQL (`learnhub_course_db`) |
 | **Mohamed Aziz BEN MAMI** | **`learning-journey-service`** | Inscriptions, avancement pas à pas, complétion des leçons et objectifs | MySQL (`learnhub_journey_db`) |
 | **Adam NSIRI** | **`assessment-service`** | Quiz, banques de questions, calcul automatique des scores et diplômes certifiants | MySQL (`learnhub_assessment_db`) |
-| **Mootez SFAIHI** | **`community-service`** | Avis notés vérifiés (réservés aux inscrits), forums de discussion et badges | MongoDB (`learnhub_community_db`) |
-| **Adam NSIRI** | **`ai-learning-coach-service`** *(Avancé)* | *(Technologie avancée)* Plans d'étude personnalisés et tutorat conversationnel par IA | MongoDB (`learnhub_aicoach_db`) |
+| **Mootez SFAIHI** | **`community-service`** | Avis notés vérifiés (réservés aux inscrits), forums de discussion et badges | mysql (`learnhub_community_db`) |
+| **Adam NSIRI** | **`ai-learning-coach-service`** *(Avancé)* | *(Technologie avancée)* Plans d'étude personnalisés et tutorat conversationnel par IA | mysql (`learnhub_aicoach_db`) |
 | **Toute l'équipe** | **`identity-service`** *(Socle commun)* | Authentification sécurisée par jeton JWT, profils, permissions et rôles | MySQL (`learnhub_identity_db`) |
 
 ---
