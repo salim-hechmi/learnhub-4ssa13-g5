@@ -64,7 +64,7 @@ L'architecture repose sur l'écosystème **Spring Cloud** et respecte scrupuleus
   [assessment-service]  (:8084) ── MySQL (learnhub_assessment_db)
   [marketplace-service] (:8085) ── MySQL (learnhub_marketplace_db)  <-- Selim Hechmi
   [community-service]   (:8086) ── Mysql (learnhub_community_db)
-  [ai-coach-service]    (:8087) ── MongoDB (learnhub_aicoach_db)      <-- Technologie Avancée (IA)
+  [ai-coach-service]    (:8087) ── mysql (learnhub_aicoach_db)      <-- Technologie Avancée (IA)
  ─────────────────────────────────────────────────────────────────────────────────────────────
                                  COMMUNICATIONS INTERSERVICES
    * Synchrones (OpenFeign) : Vérifications immédiates (ex: Inscription vérifiée avant avis)
