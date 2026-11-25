@@ -1,0 +1,27 @@
+$kind: http-request
+name: Assign Badge to User
+method: POST
+url: '{{base_url}}/api/user-badges'
+order: 3000
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": "user-001",
+      "badgeId": "{{badge_id}}",
+      "source": "MANUAL"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 201", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Response has an id", function () {
+          var json = pm.response.json();
+          pm.expect(json).to.have.property('id');
+          pm.collectionVariables.set("user_badge_id", json.id);
+      });

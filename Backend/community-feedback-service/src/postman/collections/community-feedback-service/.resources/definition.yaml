@@ -1,0 +1,18 @@
+$kind: collection
+name: Community Feedback Service
+description: 'REST API for the LearnHub community-feedback-service (port 8086). Covers course reviews, discussion threads, badges, and user badges.'
+variables:
+  - key: base_url
+    value: 'http://localhost:8086'
+  - key: review_id
+    value: ''
+  - key: thread_id
+    value: ''
+  - key: badge_id
+    value: ''
+  - key: user_badge_id
+    value: ''
+  - key: course_id
+    value: 'course-001'
+  - key: user_id
+    value: 'user-001'

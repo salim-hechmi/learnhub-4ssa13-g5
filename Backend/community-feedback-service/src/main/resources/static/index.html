@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LearnHub — Backoffice Community &amp; Feedback</title>
+<style>
+  :root{--bg:#070b16;--card:#0f172a;--line:#1e293b;--txt:#e2e8f0;--mut:#94a3b8;--blue:#2563eb;--green:#34d399;--red:#f87171;--amber:#fbbf24}
+  *{box-sizing:border-box}
+  body{zoom:2.5;margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,Segoe UI,sans-serif;padding:18px;font-size:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
+  h1{margin:6px 0 2px;font-size:26px} h2{margin:6px 0 2px;font-size:20px}
+  .mut{color:var(--mut);font-size:13px}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:#1e3a8a55;color:#60a5fa;border:1px solid #1d4ed855;margin-right:6px}
+  .pill.g{background:#06402a55;color:var(--green);border-color:#10b98155}
+  .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .tab{background:var(--card);border:1px solid var(--line);color:#cbd5e1;padding:9px 14px;border-radius:12px;cursor:pointer;font-weight:600;font-size:13px}
+  .tab.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .bar{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  input,select,textarea{background:#050912;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:9px 11px;font:inherit;width:100%}
+  .search{width:280px;max-width:100%}
+  button.btn{background:var(--blue);color:#fff;border:0;padding:9px 15px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer}
+  button.sm{background:#1e293b;color:#93c5fd;border:1px solid var(--line);padding:6px 9px;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;margin-left:6px}
+  button.sm.del{color:var(--red);background:#3f1d1d66;border-color:#7f1d1d}
+  button.sm.ok{color:var(--green)}
+  .wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--mut);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;border-bottom:1px solid var(--line)}
+  td{padding:12px 14px;border-bottom:1px solid #0b1224;vertical-align:middle}
+  .st{padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;border:1px solid}
+  .APPROVED{color:var(--green);border-color:#10b98166;background:#06402a44}
+  .PENDING{color:var(--amber);border-color:#f59e0b66;background:#45310a44}
+  .REJECTED{color:var(--red);border-color:#ef444466;background:#450a0a44}
+  .mono{font-family:ui-monospace,Consolas,monospace;color:var(--mut)}
+  .stars{color:#fbbf24;letter-spacing:1px}
+  .status{font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:8px 12px;border:1px solid var(--line);border-radius:10px}
+  .ok{color:var(--green)} .ko{color:var(--red)}
+  dialog{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:18px;padding:24px;width:min(520px,92vw)}
+  dialog::backdrop{background:#000a}
+  label{display:block;font-size:12px;color:var(--mut);margin:12px 0 4px;font-weight:600}
+  .row{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+  .toast{position:fixed;bottom:20px;right:20px;background:#0b1224;border:1px solid var(--line);padding:12px 16px;border-radius:12px;display:none}
+</style>
+</head>
+<body>
+<div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+  <div>
+    <span class="pill">Backoffice CRUD</span><span class="mut">Database-per-Service • API REST</span>
+    <h1>⚡ LearnHub — Community &amp; Feedback</h1>
+    <div class="mut">Gestion des avis, fils de discussion, badges et attributions (table d'association).</div>
+  </div>
+  <div class="status" id="apiStatus">API : …</div>
+</div>
+
+<div class="card" style="padding:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <span class="mut">URL de l'API :</span>
+  <input id="base" value="" placeholder="même origine" style="max-width:300px">
+  <button class="btn" onclick="init()">Connecter</button>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="card">
+  <div style="margin-bottom:14px">
+    <span class="pill">:8086</span><span class="pill g">MySQL (learnhub_community_db)</span>
+    <h2 id="title"></h2><div class="mut" id="subtitle"></div>
+  </div>
+  <div class="bar">
+    <input class="search" id="q" placeholder="Rechercher…" oninput="render()">
+    <button class="btn" id="addBtn" onclick="openForm()">+ Ajouter</button>
+  </div>
+  <div class="wrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+</div>
+
+<dialog id="dlg">
+  <h2 id="dlgTitle"></h2>
+  <div id="fields"></div>
+  <div class="row"><button class="sm" onclick="dlg.close()">Annuler</button><button class="btn" onclick="save()">Enregistrer</button></div>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+const stars = n => '<span class="stars">' + '★'.repeat(n) + '☆'.repeat(5-n) + '</span> ('+n+'/5)';
+const st = s => `<span class="st ${s}">${s}</span>`;
+const date = d => d ? new Date(d).toLocaleString('fr-FR') : '';
+
+// Configuration des 4 ressources : un seul moteur CRUD pour tout.
+const RES = {
+  reviews: { label:'Avis', tab:'Avis', path:'/api/reviews', title:'Avis (CourseReview)', sub:'Contrôleur : CommunityFeedbackController • collection course_reviews',
+    cols:[['id','ID',v=>`<span class="mono">#${v}</span>`],['authorName','Auteur'],['courseTitle','Cours noté'],['rating','Étoiles',stars],['comment','Commentaire'],['moderationStatus','Modération',st]],
+    fields:[['userId','User ID'],['authorName','Auteur'],['courseId','Course ID'],['courseTitle','Cours'],['rating','Note (1-5)','number'],['comment','Commentaire','textarea'],['moderationStatus','Modération','select',['PENDING','APPROVED','REJECTED']]],
+    defaults:{rating:5,moderationStatus:'PENDING'},
+    extra:(r)=>`<button class="sm ok" onclick="moderate('${r.id}','APPROVED')">✔</button><button class="sm del" onclick="moderate('${r.id}','REJECTED')">✖</button>` },
+  threads: { label:'Fil', tab:'Fils', path:'/api/threads', title:'Fils de discussion', sub:'Collection discussion_threads (réponses imbriquées)',
+    cols:[['id','ID',v=>`<span class="mono">#${v}</span>`],['authorName','Auteur'],['title','Titre'],['courseId','Cours'],['replies','Réponses',v=>(v||[]).length],['createdAt','Créé le',date]],
+    fields:[['courseId','Course ID'],['authorId','Author ID'],['authorName','Auteur'],['title','Titre'],['content','Contenu','textarea']],defaults:{},
+    extra:(r)=>`<button class="sm ok" onclick="openReplyForm('${r.id}')">Répondre</button>` },
+  badges: { label:'Badge', tab:'Badges', path:'/api/badges', title:'Catalogue des badges', sub:'Collection badges (code unique)',
+    cols:[['id','ID',v=>`<span class="mono">#${v}</span>`],['icon','Icône'],['code','Code'],['name','Nom'],['description','Description'],['triggerEvent','Événement']],
+    fields:[['code','Code (unique)'],['name','Nom'],['description','Description'],['icon','Icône (emoji)'],['triggerEvent','Événement déclencheur']],defaults:{icon:'🏅'} },
+  userBadges: { label:'Attribution', tab:'Attributions', path:'/api/user-badges', title:'Association Utilisateur ↔ Badge', sub:'Collection user_badges • index unique (userId, badgeId)',
+    cols:[['id','ID',v=>`<span class="mono">#${v}</span>`],['userId','Utilisateur'],['badgeId','Badge',(v)=>badgeName(v)],['source','Source'],['awardedAt','Attribué le',date]],
+    fields:[['userId','User ID'],['badgeId','Badge','select-badge'],['source','Source','select',['MANUAL','RABBITMQ']]],defaults:{source:'MANUAL'} }
+};
+
+let cur='reviews', rows=[], badges=[], editId=null, replyThreadId=null;
+const $=id=>document.getElementById(id), api=()=>$('base').value.trim().replace(/\/+$/,'');
+const badgeName = id => { const b = badges.find(x=>x.id===id); return b ? `${b.icon||''} ${b.name}` : id; };
+
+function toast(m,ok=true){const t=$('toast');t.textContent=m;t.style.borderColor=ok?'#10b981':'#ef4444';t.style.display='block';setTimeout(()=>t.style.display='none',2600);}
+
+async function call(method, path, body){
+  const options={method};
+  if(body!==undefined){
+    options.headers={'Content-Type':'application/json'};
+    options.body=JSON.stringify(body);
+  }
+  const r=await fetch(api()+path,options);
+  const text=r.status===204?'':await r.text();
+  let result=null;
+  if(text){
+    try{result=JSON.parse(text)}catch{result=text}
+  }
+  if(!r.ok){
+    const message=result&&typeof result==='object'?(result.message||result.error):result;
+    throw new Error(message||`Erreur HTTP ${r.status}`);
+  }
+  return result;
+}
+
+async function init(){
+  $('tabs').innerHTML = Object.entries(RES).map(([k,v])=>`<button class="tab ${k===cur?'on':''}" onclick="select('${k}')">${v.tab}</button>`).join('');
+  try{
+    const r = await fetch(api()+'/actuator/health');
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    $('apiStatus').innerHTML = `GET /actuator/health <span class="ok">${j.status}</span>`;
+  }catch(e){ $('apiStatus').innerHTML = `API <span class="ko">injoignable</span>`; toast(`Connexion API impossible : ${e.message}`,false); }
+  await load();
+}
+function select(k){cur=k;$('q').value='';init();}
+
+async function load(){
+  const R=RES[cur];
+  $('title').textContent=R.title; $('subtitle').textContent=R.sub; $('addBtn').textContent='+ Ajouter';
+  try{
+    badges = await call('GET','/api/badges');
+    rows = await call('GET',R.path);
+  }catch(e){ rows=[]; toast('Erreur de chargement : '+e.message,false); }
+  render();
+}
+
+function render(){
+  const R=RES[cur], q=$('q').value.toLowerCase();
+  $('thead').innerHTML='<tr>'+R.cols.map(c=>`<th>${c[1]}</th>`).join('')+'<th style="text-align:right">Actions</th></tr>';
+  const list = rows.filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q));
+  $('tbody').innerHTML = list.length ? list.map(r=>'<tr>'+R.cols.map(c=>`<td>${c[2]?c[2](r[c[0]]):(r[c[0]]??'')}</td>`).join('')+
+    `<td style="text-align:right;white-space:nowrap">${R.extra?R.extra(r):''}<button class="sm" onclick="openForm('${r.id}')">✏️ Modifier</button><button class="sm del" onclick="del('${r.id}')">🗑 Supprimer</button></td></tr>`).join('')
+    : `<tr><td colspan="${R.cols.length+1}" class="mut" style="text-align:center;padding:30px">Aucune donnée</td></tr>`;
+}
+
+function openForm(id){
+  const R=RES[cur]; editId=id||null; replyThreadId=null;
+  const data = id ? rows.find(r=>r.id===id) : {...R.defaults};
+  if(!data){ toast('Élément introuvable. Actualisez la liste.',false); return; }
+  $('dlgTitle').textContent=(id?'Modifier : ':'Ajouter : ')+R.label;
+  $('fields').innerHTML = R.fields.map(([k,l,t,opt])=>{
+    const v = data[k] ?? '';
+    let input;
+    if(t==='textarea') input=`<textarea id="f_${k}" rows="3">${v}</textarea>`;
+    else if(t==='select') input=`<select id="f_${k}">${opt.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
+    else if(t==='select-badge') input=`<select id="f_${k}">${badges.map(b=>`<option value="${b.id}" ${b.id===v?'selected':''}>${b.icon||''} ${b.name}</option>`).join('')}</select>`;
+    else input=`<input id="f_${k}" type="${t||'text'}" value="${String(v).replace(/"/g,'&quot;')}">`;
+    return `<label>${l}</label>${input}`;
+  }).join('');
+  dlg.showModal();
+}
+
+function openReplyForm(threadId){
+  editId=null;
+  replyThreadId=threadId;
+  $('dlgTitle').textContent='Répondre au fil';
+  $('fields').innerHTML='<label for="replyAuthorId">User ID</label><input id="replyAuthorId" required><label for="replyAuthorName">Auteur</label><input id="replyAuthorName" required><label for="replyContent">Réponse</label><textarea id="replyContent" rows="3" required></textarea>';
+  dlg.showModal();
+}
+
+async function save(){
+  if(replyThreadId){
+    const reply={
+      authorId:$('replyAuthorId').value.trim(),
+      authorName:$('replyAuthorName').value.trim(),
+      content:$('replyContent').value.trim()
+    };
+    if(!reply.authorId||!reply.authorName||!reply.content){ toast('Tous les champs de la réponse sont obligatoires.',false); return; }
+    try{
+      await call('POST',`/api/threads/${replyThreadId}/replies`,reply);
+      replyThreadId=null; dlg.close(); toast('Réponse ajoutée ✔'); await load();
+    }catch(e){ toast(e.message,false); }
+    return;
+  }
+  const R=RES[cur];
+  const base = editId ? {...rows.find(r=>r.id===editId)} : {};
+  R.fields.forEach(([k,,t])=>{ const v=$('f_'+k).value; base[k]= t==='number'?Number(v):v; });
+  try{
+    editId ? await call('PUT',`${R.path}/${editId}`,base) : await call('POST',R.path,base);
+    dlg.close(); toast(editId?'Modifié ✔':'Créé ✔'); await load();
+  }catch(e){ toast(e.message,false); }
+}
+async function del(id){
+  if(!confirm('Supprimer cet élément ?')) return;
+  try{ await call('DELETE',`${RES[cur].path}/${id}`); toast('Supprimé ✔'); await load(); }catch(e){toast(e.message,false);}
+}
+async function moderate(id,s){
+  try{ await call('PATCH',`/api/reviews/${id}/moderate?status=${s}`); toast('Modération : '+s); await load(); }catch(e){ toast(e.message,false); }
+}
+const dlg=$('dlg'); init();
+</script>
+</body>
+</html>

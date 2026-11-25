@@ -1,0 +1,27 @@
+$kind: http-request
+name: Update Thread
+method: PUT
+url: '{{base_url}}/api/threads/{{thread_id}}'
+order: 4000
+pathVariables:
+  - key: thread_id
+    value: '{{thread_id}}'
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "courseId": "course-001",
+      "authorId": "user-001",
+      "authorName": "Alice Martin",
+      "title": "Question about Chapter 3 (updated)",
+      "content": "Updated: Can someone explain the difference between @Component and @Bean in Spring?"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });

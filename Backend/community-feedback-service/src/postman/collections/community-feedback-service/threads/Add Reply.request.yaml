@@ -1,0 +1,29 @@
+$kind: http-request
+name: Add Reply
+method: POST
+url: '{{base_url}}/api/threads/{{thread_id}}/replies'
+order: 7000
+pathVariables:
+  - key: thread_id
+    value: '{{thread_id}}'
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "authorId": "user-002",
+      "authorName": "Bob Dupont",
+      "content": "@Component is for class-level scanning, @Bean is for method-level in @Configuration classes."
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 201", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Reply was added", function () {
+          var json = pm.response.json();
+          pm.expect(json.replies).to.be.an('array').that.is.not.empty;
+      });

@@ -1,0 +1,32 @@
+$kind: http-request
+name: Create Review
+method: POST
+url: '{{base_url}}/api/reviews'
+order: 3000
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": "user-001",
+      "authorName": "Alice Martin",
+      "courseId": "course-001",
+      "courseTitle": "Spring Boot Masterclass",
+      "rating": 5,
+      "comment": "Excellent course, very detailed and practical.",
+      "moderationStatus": "PENDING",
+      "verifiedEnrollment": false
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 201", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Response has an id", function () {
+          var json = pm.response.json();
+          pm.expect(json).to.have.property('id');
+          pm.collectionVariables.set("review_id", json.id);
+      });

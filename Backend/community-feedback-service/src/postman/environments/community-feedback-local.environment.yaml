@@ -1,0 +1,23 @@
+name: 'Community Feedback - Local'
+values:
+  - key: base_url
+    value: 'http://localhost:8086'
+    enabled: true
+  - key: review_id
+    value: ''
+    enabled: true
+  - key: thread_id
+    value: ''
+    enabled: true
+  - key: badge_id
+    value: ''
+    enabled: true
+  - key: user_badge_id
+    value: ''
+    enabled: true
+  - key: course_id
+    value: 'course-001'
+    enabled: true
+  - key: user_id
+    value: 'user-001'
+    enabled: true

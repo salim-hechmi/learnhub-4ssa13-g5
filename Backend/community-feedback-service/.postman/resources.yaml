@@ -1,0 +1,7 @@
+# Use this workspace to collaborate
+workspace:
+  id: 251fe8ad-87b5-4268-803a-53261f3aca0b
+
+localResources:
+  environments:
+    - ../src/postman/environments/community-feedback-local.environment.yaml

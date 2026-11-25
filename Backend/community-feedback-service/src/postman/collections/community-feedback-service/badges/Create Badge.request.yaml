@@ -1,0 +1,29 @@
+$kind: http-request
+name: Create Badge
+method: POST
+url: '{{base_url}}/api/badges'
+order: 3000
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "code": "AWD_ARCHITECT",
+      "name": "API Architect",
+      "description": "Awarded for completing the API design track",
+      "icon": "architect-icon",
+      "triggerEvent": "CertificateIssued"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 201", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Response has an id", function () {
+          var json = pm.response.json();
+          pm.expect(json).to.have.property('id');
+          pm.collectionVariables.set("badge_id", json.id);
+      });

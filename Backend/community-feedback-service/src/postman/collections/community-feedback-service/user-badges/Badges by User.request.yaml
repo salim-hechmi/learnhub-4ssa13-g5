@@ -1,0 +1,18 @@
+$kind: http-request
+name: Badges by User
+method: GET
+url: '{{base_url}}/api/user-badges/user/{{user_id}}'
+order: 6000
+pathVariables:
+  - key: user_id
+    value: '{{user_id}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response is an array", function () {
+          pm.expect(pm.response.json()).to.be.an('array');
+      });

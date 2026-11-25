@@ -1,0 +1,18 @@
+$kind: http-request
+name: Get Badge by ID
+method: GET
+url: '{{base_url}}/api/badges/{{badge_id}}'
+order: 2000
+pathVariables:
+  - key: badge_id
+    value: '{{badge_id}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response has an id", function () {
+          pm.expect(pm.response.json()).to.have.property('id');
+      });

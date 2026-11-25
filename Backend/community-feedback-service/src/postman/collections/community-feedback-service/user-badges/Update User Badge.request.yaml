@@ -1,0 +1,25 @@
+$kind: http-request
+name: Update User Badge
+method: PUT
+url: '{{base_url}}/api/user-badges/{{user_badge_id}}'
+order: 4000
+pathVariables:
+  - key: user_badge_id
+    value: '{{user_badge_id}}'
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": "user-001",
+      "badgeId": "{{badge_id}}",
+      "source": "RABBITMQ"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });

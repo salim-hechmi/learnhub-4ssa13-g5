@@ -1,0 +1,29 @@
+$kind: http-request
+name: Create Thread
+method: POST
+url: '{{base_url}}/api/threads'
+order: 3000
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "courseId": "course-001",
+      "authorId": "user-001",
+      "authorName": "Alice Martin",
+      "title": "Question about Chapter 3",
+      "content": "Can someone explain the difference between @Component and @Bean?"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 201", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Response has an id", function () {
+          var json = pm.response.json();
+          pm.expect(json).to.have.property('id');
+          pm.collectionVariables.set("thread_id", json.id);
+      });

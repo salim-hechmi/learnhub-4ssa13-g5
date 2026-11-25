@@ -1,0 +1,30 @@
+$kind: http-request
+name: Update Review
+method: PUT
+url: '{{base_url}}/api/reviews/{{review_id}}'
+order: 4000
+pathVariables:
+  - key: review_id
+    value: '{{review_id}}'
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": "user-001",
+      "authorName": "Alice Martin",
+      "courseId": "course-001",
+      "courseTitle": "Spring Boot Masterclass",
+      "rating": 4,
+      "comment": "Great course, updated review.",
+      "moderationStatus": "APPROVED",
+      "verifiedEnrollment": true
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });
