@@ -63,7 +63,7 @@ L'architecture repose sur l'écosystème **Spring Cloud** et respecte scrupuleus
   [journey-service]     (:8083) ── MySQL (learnhub_journey_db)
   [assessment-service]  (:8084) ── MySQL (learnhub_assessment_db)
   [marketplace-service] (:8085) ── MySQL (learnhub_marketplace_db)  <-- Selim Hechmi
-  [community-service]   (:8086) ── MongoDB (learnhub_community_db)
+  [community-service]   (:8086) ── Mysql (learnhub_community_db)
   [ai-coach-service]    (:8087) ── MongoDB (learnhub_aicoach_db)      <-- Technologie Avancée (IA)
  ─────────────────────────────────────────────────────────────────────────────────────────────
                                  COMMUNICATIONS INTERSERVICES
