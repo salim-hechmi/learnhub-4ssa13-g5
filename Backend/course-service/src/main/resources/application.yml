@@ -4,39 +4,117 @@ server:
 spring:
   application:
     name: course-service
+
+  # ================================================================
+  # BASE DE DONNÉES MySQL 8.x - learnhub_course_db
+  # ================================================================
   datasource:
-    # Par défaut : base H2 en mémoire avec persistance fichier pour démarrage instantané
-    url: jdbc:h2:mem:learnhub_course_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driverClassName: org.h2.Driver
-    username: sa
-    password: 
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    url: jdbc:mysql://localhost:3306/learnhub_course_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: ""      # <-- MODIFIE avec ton mot de passe MySQL
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: update  # update : génère/aligne les tables sans supprimer les données
     show-sql: true
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
+    open-in-view: false
 
-# Documentation interactive OpenAPI
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    tags-sorter: alpha
-    operations-sorter: method
-
-# Configuration d'intégration Spring Cloud & Résilience (prévue pour l'étape 4)
-learnhub:
-  eureka:
-    service-url: http://localhost:8761/eureka/
+  # ================================================================
+  # RABBITMQ
+  # ================================================================
   rabbitmq:
     host: localhost
     port: 5672
-    exchange: learnhub.events.exchange
+    username: guest
+    password: guest
+    virtual-host: /
+
+# ================================================================
+# EUREKA CLIENT (Service Discovery)
+# ================================================================
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+      # 2ème instance Eureka (selon consigne prof) :
+      # defaultZone: http://localhost:8761/eureka/,http://localhost:8762/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    health-check-url-path: /actuator/health
+    status-page-url-path: /actuator/info
+
+# ================================================================
+# SPRING ACTUATOR (Observabilité - consigne prof)
+# ================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,beans,env,mappings,loggers,threaddump,heapdump,conditions,scheduledtasks
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    info:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+# ================================================================
+# INFO Actuator (affiché sur /actuator/info)
+# ================================================================
+info:
+  app:
+    name: "LearnHub - Course Service"
+    description: "Microservice de gestion du catalogue de cours"
+    version: "1.0.0"
+    team: "4SSA13 - Groupe G5 - ESPRIT"
+    responsable: "Nawres Soua"
+    module: "AWD - Application Web Distribuée"
+  java:
+    version: "17"
+  spring:
+    boot: "3.3.5"
+    cloud: "2023.0.3"
+
+# ================================================================
+# SWAGGER / OpenAPI
+# ================================================================
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    display-operation-id: true
+    tags-sorter: alpha
+
+# ================================================================
+# RABBITMQ - CONFIGURATION MÉTIER (topics / routing keys)
+# ================================================================
+rabbitmq:
+  exchange:
+    topic: learnhub.topic
+  queue:
+    course-published: course.published.queue
+  routing-key:
+    course-published: course.published
+
+# ================================================================
+# LOGGING
+# ================================================================
+logging:
+  level:
+    com.learnhub.course: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
