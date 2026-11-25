@@ -1,34 +1,36 @@
 package com.learnhub.course.model;
 
 import jakarta.persistence.*;
-import java.io.Serializable;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Entité métier Category propre au contexte borné de course-service.
- * Règle AWD : Une base par service, aucune relation JPA inter-services.
- * Les références externes sont stockées sous forme d'identifiants simples (Long).
+ * Entité JPA représentant une catégorie de cours.
+ * Correspond à la table `category` dans learnhub_course_db.
  */
 @Entity
-@Table(name = "categorys")
-public class Category implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+@Table(name = "category")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
+
+    @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
-    private String slug;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    public Category() {
-    }
-
-    public Long getId() {
-        return this.id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+    /** Relation bidirectionnelle : une catégorie possède plusieurs cours. */
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Course> courses = new ArrayList<>();
 }
