@@ -1,0 +1,113 @@
+<section class="mk-panel mk-pad">
+  <div class="mk-toolbar">
+    <div>
+      <h2 class="mk-h1" style="font-size:18px">Factures</h2>
+      <p class="mk-sub">Une facture par commande payée.</p>
+    </div>
+    <div class="mk-filters">
+      <div class="mk-search"><input class="mk-input mono" placeholder="INV-2026-000001" [(ngModel)]="lookup" (keyup.enter)="findByNumber()"></div>
+      <button class="mk-btn primary" (click)="findByNumber()">Ouvrir</button>
+    </div>
+  </div>
+
+  <div class="mk-table-wrap">
+    <table class="mk-table">
+      <thead><tr><th>N° facture</th><th>Émise le</th><th>Commande</th><th>Client</th><th>Cours</th><th>Paiement</th><th class="num">Total</th><th></th></tr></thead>
+      <tbody>
+        @for (inv of page()?.content ?? []; track inv.id) {
+          <tr class="clickable" (click)="viewing.set(inv)">
+            <td><code class="mk-strong">{{ inv.invoiceNumber }}</code></td>
+            <td class="mk-muted">{{ inv.issuedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="mk-id">#{{ inv.orderId }}</td>
+            <td><mk-student [id]="inv.studentId" /></td>
+            <td class="mk-muted">{{ inv.items.length }}</td>
+            <td>@if (inv.paymentMethod) { <mk-method [method]="inv.paymentMethod" /> }</td>
+            <td class="num mk-amount">{{ inv.totalAmount | number:'1.2-2' }} <span class="mk-small mk-muted">{{ inv.currency }}</span></td>
+            <td class="actions"><button class="mk-btn ghost sm">Voir</button></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="8">
+            @if (loading()) { <div class="mk-skel"></div> } @else { <div class="mk-empty">Aucune facture pour le moment.</div> }
+          </td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (page(); as p) {
+    <div class="mk-pagination">
+      <span>{{ p.totalElements }} {{ p.totalElements > 1 ? 'factures' : 'facture' }}</span>
+      <div class="mk-pages">
+        <button class="mk-btn ghost sm" [disabled]="p.page === 0" (click)="load(p.page - 1)">‹</button>
+        <span style="align-self:center">{{ p.page + 1 }} / {{ p.totalPages || 1 }}</span>
+        <button class="mk-btn ghost sm" [disabled]="p.last" (click)="load(p.page + 1)">›</button>
+      </div>
+    </div>
+  }
+</section>
+
+<!-- ===================== FACTURE IMPRIMABLE ===================== -->
+@if (viewing(); as inv) {
+  <div class="mk-backdrop" (click)="viewing.set(null)">
+    <div class="mk-modal wide" (click)="$event.stopPropagation()">
+      <div class="mk-modal-head">
+        <h3>Facture {{ inv.invoiceNumber }}</h3>
+        <span style="display:flex;gap:8px">
+          <button class="mk-btn ghost sm" (click)="print()"><mk-icon name="print" /> Imprimer</button>
+          <button class="mk-close" (click)="viewing.set(null)">×</button>
+        </span>
+      </div>
+      <div class="mk-modal-body">
+        <div class="mk-invoice">
+          <div class="head">
+            <div>
+              <div class="brand">Learn<span>Hub</span></div>
+              <div style="color:#64748b;font-size:12px;margin-top:4px">Plateforme d'apprentissage en ligne<br>ESPRIT — Ariana, Tunisie</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:18px;font-weight:900">FACTURE</div>
+              <div style="font-family:monospace">{{ inv.invoiceNumber }}</div>
+              <div style="color:#64748b;font-size:12px">Émise le {{ inv.issuedAt | date:'dd/MM/yyyy' }}</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;margin-top:16px;gap:16px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Facturé à</div>
+              <b>{{ studentName(inv.studentId) }}</b>
+              <div style="font-family:monospace;font-size:11px;color:#64748b">{{ inv.studentId }}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Commande</div>
+              <b>#{{ inv.orderId }}</b>
+              <div style="font-size:12px;color:#64748b">Payée le {{ inv.paidAt | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead><tr><th>Réf.</th><th>Désignation</th><th style="text-align:right">Prix unitaire</th></tr></thead>
+            <tbody>
+              @for (i of inv.items; track i.id) {
+                <tr><td style="font-family:monospace">C-{{ i.courseId }}</td><td>{{ i.courseTitle }} <span style="color:#64748b">— accès à vie</span></td>
+                  <td style="text-align:right">{{ i.unitPrice | number:'1.2-2' }} {{ inv.currency }}</td></tr>
+              }
+            </tbody>
+          </table>
+
+          <div class="tot">
+            <table>
+              <tr><td>Sous-total</td><td style="text-align:right">{{ inv.totalAmount | number:'1.2-2' }} {{ inv.currency }}</td></tr>
+              <tr><td>TVA (formation, exonérée)</td><td style="text-align:right">0.00</td></tr>
+              <tr class="grand"><td>Total payé</td><td style="text-align:right">{{ inv.totalAmount | number:'1.2-2' }} {{ inv.currency }}</td></tr>
+            </table>
+          </div>
+
+          <div class="foot">
+            <span>Paiement : {{ methodLabel(inv.paymentMethod) }} · Réf. <span style="font-family:monospace">{{ inv.transactionRef }}</span></span>
+            @if (inv.orderStatus === 'REFUNDED') { <span class="stamp refunded">REMBOURSÉE</span> } @else { <span class="stamp">PAYÉE</span> }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

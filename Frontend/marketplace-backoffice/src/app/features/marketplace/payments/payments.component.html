@@ -1,0 +1,61 @@
+<section class="mk-panel mk-pad">
+  <div class="mk-toolbar">
+    <div>
+      <h2 class="mk-h1" style="font-size:18px">Transactions</h2>
+      <p class="mk-sub">Toutes les tentatives de paiement, acceptées ou refusées.</p>
+    </div>
+    <div class="mk-filters">
+      <select class="mk-select" [(ngModel)]="status" (ngModelChange)="load(0)">
+        <option value="">Tous les statuts</option><option value="SUCCESS">Acceptés</option><option value="FAILED">Refusés</option>
+      </select>
+      <select class="mk-select" [(ngModel)]="method" (ngModelChange)="load(0)">
+        <option value="">Tous les moyens</option><option value="STRIPE">Stripe</option>
+        <option value="PAYPAL">PayPal</option><option value="SIMULATOR">Simulateur</option>
+      </select>
+      <button class="mk-btn ghost mk-icon-btn" title="Actualiser" (click)="refresh()"><mk-icon name="refresh" /></button>
+    </div>
+  </div>
+
+  <div class="mk-kpis" style="margin-bottom:16px">
+    <div class="mk-card mk-kpi emerald"><div class="label">Acceptées</div><div class="value">{{ pageSummary().ok }}</div><div class="hint">sur cette page</div></div>
+    <div class="mk-card mk-kpi"><div class="label">Refusées</div><div class="value" style="color:var(--red)">{{ pageSummary().ko }}</div><div class="hint">sur cette page</div></div>
+    <div class="mk-card mk-kpi blue"><div class="label">Encaissé</div><div class="value">{{ pageSummary().amount | number:'1.2-2' }}</div><div class="hint">sur cette page</div></div>
+  </div>
+
+  <div class="mk-table-wrap">
+    <table class="mk-table">
+      <thead><tr><th>#</th><th>Référence</th><th>Commande</th><th>Étudiant</th><th>Moyen</th><th>Statut</th><th class="num">Montant</th></tr></thead>
+      <tbody>
+        @for (p of page()?.content ?? []; track p.id) {
+          <tr>
+            <td class="mk-id">#{{ p.id }}</td>
+            <td><code class="mk-small" style="cursor:copy" title="Copier" (click)="copy(p.transactionRef)">{{ p.transactionRef }}</code></td>
+            <td class="mk-id">#{{ p.orderId }}</td>
+            <td><mk-student [id]="p.studentId" /></td>
+            <td><mk-method [method]="p.method" /></td>
+            <td><mk-status-badge [status]="p.status" /></td>
+            <td class="num mk-amount" [style.color]="p.status === 'FAILED' ? '#64748b' : null"
+                [style.text-decoration]="p.status === 'FAILED' ? 'line-through' : null">
+              {{ p.amount | number:'1.2-2' }} <span class="mk-small mk-muted">{{ p.currency }}</span>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7">
+            @if (loading()) { <div class="mk-skel"></div> } @else { <div class="mk-empty">Aucune transaction.</div> }
+          </td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (page(); as p) {
+    <div class="mk-pagination">
+      <span>{{ p.totalElements }} {{ p.totalElements > 1 ? 'transactions' : 'transaction' }}</span>
+      <div class="mk-pages">
+        <button class="mk-btn ghost sm" [disabled]="p.page === 0" (click)="load(p.page - 1)">‹ Précédent</button>
+        <span style="align-self:center">{{ p.page + 1 }} / {{ p.totalPages || 1 }}</span>
+        <button class="mk-btn ghost sm" [disabled]="p.last" (click)="load(p.page + 1)">Suivant ›</button>
+      </div>
+    </div>
+  }
+</section>

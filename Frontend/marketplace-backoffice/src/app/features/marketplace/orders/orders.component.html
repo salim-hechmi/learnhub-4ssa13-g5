@@ -1,0 +1,298 @@
+<section class="mk-panel mk-pad">
+  <!-- ===== Barre d'outils ===== -->
+  <div class="mk-toolbar">
+    <h2 class="mk-h1" style="font-size:18px">Commandes</h2>
+    <button class="mk-btn primary" (click)="openCreate()"><mk-icon name="plus" /> Nouvelle commande</button>
+  </div>
+
+  <div class="mk-tabs" style="margin-bottom:14px">
+    @for (t of statusTabs; track t.value) {
+      <button class="mk-tab" [class.active]="filters().status === t.value" (click)="patchFilters({ status: t.value, page: 0 })">{{ t.label }}</button>
+    }
+  </div>
+
+  <div class="mk-filters" style="margin-bottom:16px">
+    <div class="mk-search">
+      <input class="mk-input" placeholder="N° commande, étudiant, titre de cours…" [ngModel]="filters().q" (ngModelChange)="onSearch($event)">
+    </div>
+    <input class="mk-input" type="number" min="1" style="width:120px" placeholder="N° de cours"
+           [ngModel]="filters().courseId" (ngModelChange)="patchFilters({ courseId: $event || null, page: 0 })">
+    <label class="mk-muted mk-small">Du</label>
+    <input class="mk-input" type="date" [ngModel]="filters().from" (ngModelChange)="patchFilters({ from: $event, page: 0 })">
+    <label class="mk-muted mk-small">au</label>
+    <input class="mk-input" type="date" [ngModel]="filters().to" (ngModelChange)="patchFilters({ to: $event, page: 0 })">
+    <select class="mk-select" [ngModel]="filters().sort" (ngModelChange)="patchFilters({ sort: $event, page: 0 })">
+      <option value="createdAt,desc">Plus récentes</option>
+      <option value="createdAt,asc">Plus anciennes</option>
+      <option value="totalAmount,desc">Montant décroissant</option>
+      <option value="totalAmount,asc">Montant croissant</option>
+    </select>
+    <button class="mk-btn ghost sm" (click)="resetFilters()">Réinitialiser</button>
+  </div>
+
+  <!-- ===== Tableau ===== -->
+  <div class="mk-table-wrap">
+    <table class="mk-table">
+      <thead>
+        <tr><th>Commande</th><th>Étudiant</th><th>Cours achetés</th><th>Créée le</th><th>Statut</th><th>Facture</th><th class="num">Montant</th><th class="actions">Actions</th></tr>
+      </thead>
+      <tbody>
+        @if (loading() && !page()) {
+          @for (i of [1,2,3,4,5]; track i) { <tr><td colspan="8"><div class="mk-skel"></div></td></tr> }
+        }
+        @for (o of page()?.content ?? []; track o.id) {
+          <tr class="clickable" (click)="openDetail(o)">
+            <td class="mk-id">#{{ o.id }}</td>
+            <td><mk-student [id]="o.studentId" /></td>
+            <td>
+              <div class="mk-courses">
+                @for (i of o.items.slice(0, 2); track i.id) { <span class="mk-course-line">{{ i.courseTitle }}</span> }
+                @if (o.items.length > 2) { <span class="mk-more">+ {{ o.items.length - 2 }} {{ o.items.length > 3 ? 'autres' : 'autre' }}</span> }
+              </div>
+            </td>
+            <td class="mk-muted">{{ o.createdAt | date:'dd/MM/yyyy' }}<br><span class="mk-small">{{ o.createdAt | date:'HH:mm' }}</span></td>
+            <td><mk-status-badge [status]="o.status" /></td>
+            <td>@if (o.invoiceNumber) { <code class="mk-small">{{ o.invoiceNumber }}</code> } @else { <span class="mk-muted">—</span> }</td>
+            <td class="num mk-amount">{{ o.totalAmount | number:'1.2-2' }} <span class="mk-muted mk-small">{{ o.currency }}</span></td>
+            <td class="actions" (click)="$event.stopPropagation()">
+              @if (isPayable(o)) {
+                <button class="mk-btn success sm" (click)="openCheckout(o)">Payer</button>
+                <button class="mk-btn ghost sm mk-icon-btn" (click)="openEdit(o)" title="Modifier"><mk-icon name="edit" /></button>
+                <button class="mk-btn danger sm mk-icon-btn" (click)="askDelete(o)" title="Supprimer"><mk-icon name="trash" /></button>
+              }
+              @if (o.status === 'PAID') {
+                <button class="mk-btn warn sm" (click)="askRefund(o)">Rembourser</button>
+              }
+              <button class="mk-btn ghost sm mk-icon-btn" (click)="openDetail(o)" title="Détail"><mk-icon name="eye" /></button>
+            </td>
+          </tr>
+        }
+        @if (page() && !page()!.content.length) {
+          <tr><td colspan="8"><div class="mk-empty">Aucune commande ne correspond à ces filtres.</div></td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (page(); as p) {
+    <div class="mk-pagination">
+      <span>{{ p.totalElements }} {{ p.totalElements > 1 ? 'commandes' : 'commande' }} · page {{ p.page + 1 }} sur {{ p.totalPages || 1 }}</span>
+      <div class="mk-pages">
+        <button class="mk-btn ghost sm" [disabled]="p.page === 0" (click)="goTo(p.page - 1)">‹</button>
+        @for (n of pageNumbers(); track n) {
+          <button class="mk-btn sm" [class.primary]="n === p.page" [class.ghost]="n !== p.page" (click)="goTo(n)">{{ n + 1 }}</button>
+        }
+        <button class="mk-btn ghost sm" [disabled]="p.last" (click)="goTo(p.page + 1)">›</button>
+        <select class="mk-select" style="padding:5px 8px" [ngModel]="filters().size" (ngModelChange)="patchFilters({ size: +$event, page: 0 })">
+          <option [ngValue]="5">5 / page</option><option [ngValue]="10">10 / page</option><option [ngValue]="20">20 / page</option>
+        </select>
+      </div>
+    </div>
+  }
+</section>
+
+<!-- ===================== MODALE CRÉER / MODIFIER ===================== -->
+@if (formMode()) {
+  <div class="mk-backdrop" (click)="formMode.set(null)">
+    <div class="mk-modal" (click)="$event.stopPropagation()">
+      <div class="mk-modal-head">
+        <h3>{{ formMode() === 'create' ? 'Nouvelle commande' : 'Modifier la commande #' + editing()?.id }}</h3>
+        <button class="mk-close" (click)="formMode.set(null)">×</button>
+      </div>
+      <div class="mk-modal-body">
+        @if (formMode() === 'create') {
+          <div class="mk-field">
+            <label class="mk-label">Identifiant de l'étudiant</label>
+            <input class="mk-input" style="width:100%" [(ngModel)]="formStudentId" placeholder="Laisser vide pour votre propre compte">
+          </div>
+        }
+
+        <div class="mk-field">
+          <label class="mk-label">Cours @if (selected().size) {<span class="mk-muted">({{ selected().size }})</span>}</label>
+          @if (catalog.courses().length) {
+            <div class="mk-course-pick" style="max-height:230px;overflow:auto">
+              @for (c of catalog.courses(); track c.id) {
+                <label class="mk-course-opt" [class.on]="selected().has(c.id)">
+                  <input type="checkbox" [checked]="selected().has(c.id)" (change)="toggleCourse(c)">
+                  <span class="t">{{ c.title }}</span>
+                  <span class="p">{{ c.price | number:'1.2-2' }}</span>
+                </label>
+              }
+            </div>
+          } @else {
+            <div class="mk-help" style="margin-bottom:8px">
+              {{ catalog.available() ? 'Chargement des cours…' : 'Liste des cours indisponible. Ajoutez-les par numéro.' }}
+            </div>
+            @for (c of selected().values(); track c.id) {
+              <div class="mk-course-opt on" style="margin-bottom:6px">
+                <span class="t">{{ c.title }}</span>
+                <button class="mk-btn danger sm mk-icon-btn" (click)="removeSelected(c.id)" title="Retirer"><mk-icon name="trash" /></button>
+              </div>
+            }
+          }
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input class="mk-input" type="number" min="1" style="flex:1" placeholder="Ajouter un cours par numéro" [(ngModel)]="manualCourseId" (keyup.enter)="addManualCourse()">
+            <button class="mk-btn ghost" (click)="addManualCourse()">Ajouter</button>
+          </div>
+        </div>
+
+        <div class="mk-total">
+          <span class="mk-muted">Total</span>
+          <b>{{ formTotal() | number:'1.2-2' }} {{ currency }}</b>
+        </div>
+      </div>
+      <div class="mk-modal-foot">
+        <button class="mk-btn ghost" (click)="formMode.set(null)">Annuler</button>
+        <button class="mk-btn primary" [disabled]="saving() || !selected().size" (click)="submitForm()">
+          {{ saving() ? 'Enregistrement…' : formMode() === 'create' ? 'Créer la commande' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ===================== MODALE PAIEMENT SANDBOX ===================== -->
+@if (paying(); as o) {
+  <div class="mk-backdrop" (click)="paying.set(null)">
+    <div class="mk-modal" (click)="$event.stopPropagation()">
+      <div class="mk-modal-head">
+        <h3>Paiement de la commande #{{ o.id }}</h3>
+        <button class="mk-close" (click)="paying.set(null)">×</button>
+      </div>
+
+      @if (payResult(); as r) {
+        <div class="mk-modal-body">
+          <div class="mk-result" [class.ok]="r.paymentStatus === 'SUCCESS'" [class.ko]="r.paymentStatus === 'FAILED'">
+            <h4>{{ r.paymentStatus === 'SUCCESS' ? 'Paiement accepté' : 'Paiement refusé' }}</h4>
+            <p>{{ r.message }}</p>
+          </div>
+          <dl class="mk-kv" style="margin-top:16px">
+            <dt>Référence</dt><dd><code>{{ r.payment.transactionRef }}</code></dd>
+            <dt>Montant</dt><dd>{{ r.payment.amount | number:'1.2-2' }} {{ r.payment.currency }}</dd>
+            <dt>Commande</dt><dd><mk-status-badge [status]="r.orderStatus" /></dd>
+            @if (r.invoice) { <dt>Facture</dt><dd><code>{{ r.invoice.invoiceNumber }}</code></dd> }
+          </dl>
+        </div>
+        <div class="mk-modal-foot">
+          @if (r.paymentStatus === 'FAILED') { <button class="mk-btn ghost" (click)="payResult.set(null)">Réessayer</button> }
+          <button class="mk-btn primary" (click)="paying.set(null)">Fermer</button>
+        </div>
+      } @else {
+        <div class="mk-modal-body">
+          <div class="mk-total" style="margin-top:0">
+            <span class="mk-muted">{{ o.itemsCount }} cours</span>
+            <b>{{ o.totalAmount | number:'1.2-2' }} {{ o.currency }}</b>
+          </div>
+
+          <label class="mk-label" style="margin-top:16px">Moyen de paiement</label>
+          <div class="mk-methods">
+            @for (m of ['STRIPE','PAYPAL','SIMULATOR']; track m) {
+              <div class="mk-method-card" [class.on]="payMethod === m" (click)="payMethod = $any(m)">
+                <mk-method [method]="$any(m)" />
+                <small>{{ m === 'STRIPE' ? 'Carte bancaire' : m === 'PAYPAL' ? 'Compte PayPal' : 'Mode test' }}</small>
+              </div>
+            }
+          </div>
+
+          @if (payMethod === 'STRIPE') {
+            <label class="mk-label" style="margin-top:16px">Numéro de carte</label>
+            <input class="mk-input mono" style="width:100%" maxlength="19" [(ngModel)]="cardNumber">
+            <div class="mk-test-cards">
+              @for (c of testCards; track c.n) { <button type="button" (click)="cardNumber = c.n">{{ c.n.slice(-4) }} · {{ c.l }}</button> }
+            </div>
+          }
+
+          <label class="mk-course-opt" style="margin-top:14px" [class.on]="simulateFailure">
+            <input type="checkbox" [(ngModel)]="simulateFailure">
+            <span class="t">Simuler un refus</span>
+          </label>
+        </div>
+        <div class="mk-modal-foot">
+          <button class="mk-btn ghost" (click)="paying.set(null)">Annuler</button>
+          <button class="mk-btn success" [disabled]="saving()" (click)="pay()">
+            {{ saving() ? 'Traitement…' : 'Payer ' + (o.totalAmount | number:'1.2-2') + ' ' + o.currency }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- ===================== CONFIRMATION ===================== -->
+@if (confirm(); as c) {
+  <div class="mk-backdrop" (click)="confirm.set(null)">
+    <div class="mk-modal" style="max-width:440px" (click)="$event.stopPropagation()">
+      <div class="mk-modal-body" style="padding-top:22px">
+        <h3 style="margin:0 0 8px;font-size:16px">{{ c.kind === 'delete' ? 'Supprimer' : 'Rembourser' }} la commande #{{ c.order.id }} ?</h3>
+        <p class="mk-muted" style="font-size:13px;margin:0">
+          @if (c.kind === 'delete') { La commande et ses tentatives de paiement seront supprimées définitivement. }
+          @else { {{ c.order.totalAmount | number:'1.2-2' }} {{ c.order.currency }} seront remboursés à l'étudiant. La facture reste archivée. }
+        </p>
+      </div>
+      <div class="mk-modal-foot">
+        <button class="mk-btn ghost" (click)="confirm.set(null)">Annuler</button>
+        <button class="mk-btn" [class.danger]="c.kind === 'delete'" [class.warn]="c.kind === 'refund'" [disabled]="saving()" (click)="doConfirm()">
+          {{ c.kind === 'delete' ? 'Supprimer' : 'Rembourser' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ===================== TIROIR DÉTAIL ===================== -->
+@if (detail(); as o) {
+  <div class="mk-drawer-backdrop" (click)="detail.set(null)"></div>
+  <aside class="mk-drawer">
+    <div class="mk-modal-head">
+      <h3>Commande <span class="mk-id" style="font-size:15px">#{{ o.id }}</span> <mk-status-badge [status]="o.status" /></h3>
+      <button class="mk-close" (click)="detail.set(null)">×</button>
+    </div>
+    <div class="mk-modal-body" style="display:flex;flex-direction:column;gap:20px">
+      <mk-student [id]="o.studentId" />
+
+      <dl class="mk-kv">
+        <dt>Créée le</dt><dd>{{ o.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+        <dt>Payée le</dt><dd>{{ o.paidAt ? (o.paidAt | date:'dd/MM/yyyy HH:mm') : '—' }}</dd>
+        <dt>Facture</dt><dd>{{ o.invoiceNumber ?? '—' }}</dd>
+      </dl>
+
+      <div>
+        <h4 class="mk-section-title">Cours</h4>
+        <div class="mk-table-wrap">
+          <table class="mk-table">
+            <thead><tr><th>Titre</th><th class="num">Prix</th></tr></thead>
+            <tbody>
+              @for (i of o.items; track i.id) {
+                <tr><td class="mk-strong">{{ i.courseTitle }}</td><td class="num">{{ i.unitPrice | number:'1.2-2' }}</td></tr>
+              }
+              <tr><td class="mk-strong">Total</td><td class="num mk-amount">{{ o.totalAmount | number:'1.2-2' }} {{ o.currency }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="mk-section-title">Historique</h4>
+        <div class="mk-timeline">
+          @for (s of timeline(); track $index) {
+            <div class="mk-tl" [class]="'mk-tl ' + s.css">
+              <b>{{ s.title }}</b> @if (s.when) { <span class="when">· {{ s.when | date:'dd/MM HH:mm' }}</span> }
+              @if (s.detail) { <div class="mk-muted mk-small">{{ s.detail }}</div> }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        @if (isPayable(o)) {
+          <button class="mk-btn success" (click)="openCheckout(o)">Payer</button>
+          <button class="mk-btn ghost" (click)="openEdit(o)"><mk-icon name="edit" /> Modifier</button>
+          @if (o.status === 'PENDING') { <button class="mk-btn ghost" (click)="changeStatus(o, 'FAILED')">Marquer comme échouée</button> }
+          @if (o.status === 'FAILED') { <button class="mk-btn ghost" (click)="changeStatus(o, 'PENDING')">Remettre en attente</button> }
+          <button class="mk-btn danger" (click)="askDelete(o)"><mk-icon name="trash" /> Supprimer</button>
+        }
+        @if (o.status === 'PAID') { <button class="mk-btn warn" (click)="askRefund(o)">Rembourser</button> }
+      </div>
+    </div>
+  </aside>
+}

@@ -1,42 +1,131 @@
+# =====================================================================
+#  LearnHub - marketplace-service (Microservice 5 - Selim Hechmi)
+#  Port 8085 | MySQL db_marketplace | Eureka | RabbitMQ | OpenFeign
+# =====================================================================
 server:
   port: 8085
 
 spring:
   application:
     name: marketplace-service
+
+  # Config Server (optionnel : le service démarre même si le Config Server est éteint)
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+
+  # ---------- Base de données dédiée (Database-per-Service) ----------
   datasource:
-    # Par défaut : base H2 en mémoire avec persistance fichier pour démarrage instantané
-    url: jdbc:h2:mem:learnhub_marketplace_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driverClassName: org.h2.Driver
-    username: sa
-    password: 
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/db_marketplace?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
+        default_batch_fetch_size: 50   # évite le N+1 sur items/payments dans les listes paginées
+        jdbc:
+          time_zone: UTC
 
-# Documentation interactive OpenAPI
+  # ---------- RabbitMQ ----------
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+  # ---------- OpenFeign + Circuit Breaker ----------
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+      client:
+        config:
+          course-service:
+            connect-timeout: 3000
+            read-timeout: 5000
+            logger-level: basic
+
+# ---------- Eureka ----------
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# ---------- Resilience4j (circuit breaker de l'appel course-service) ----------
+resilience4j:
+  circuitbreaker:
+    instances:
+      course-service:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+  timelimiter:
+    instances:
+      course-service:
+        timeout-duration: 5s
+
+# ---------- Paramètres métier du Marketplace ----------
+marketplace:
+  currency: TND
+  rabbitmq:
+    exchange: learnhub.marketplace.exchange
+    payment-completed-routing-key: payment.completed
+    payment-completed-queue: journey.payment-completed.queue
+    order-refunded-routing-key: order.refunded
+  seed-demo-data: true
+
+# ---------- Actuator ----------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+# ---------- Swagger / OpenAPI ----------
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    tags-sorter: alpha
     operations-sorter: method
+    tags-sorter: alpha
 
-# Configuration d'intégration Spring Cloud & Résilience (prévue pour l'étape 4)
-learnhub:
-  eureka:
-    service-url: http://localhost:8761/eureka/
-  rabbitmq:
-    host: localhost
-    port: 5672
-    exchange: learnhub.events.exchange
+logging:
+  level:
+    tn.esprit.learnhub.marketplace: INFO
+    tn.esprit.learnhub.marketplace.client: DEBUG
+
+---
+# =====================================================================
+#  Profil "standalone" : tester le Marketplace SEUL dans Postman,
+#  sans Eureka, sans course-service (catalogue simulé), sans Config Server.
+#  Lancement : mvn spring-boot:run -Dspring-boot.run.profiles=standalone
+# =====================================================================
+spring:
+  config:
+    activate:
+      on-profile: standalone
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+eureka:
+  client:
+    enabled: false

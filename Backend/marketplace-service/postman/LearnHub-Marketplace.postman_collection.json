@@ -1,0 +1,2444 @@
+{
+  "info": {
+    "_postman_id": "8d61f2f2-7915-4cf7-8e7e-951c3d7c410b",
+    "name": "LearnHub — Marketplace Service (8085)",
+    "description": "Tests du microservice marketplace-service (Selim Hechmi — G5 4SSA13).\n\n• baseUrl = http://localhost:8085 (direct) ou http://localhost:8080 (via Gateway, ajouter alors un vrai Bearer token).\n• Les en-têtes X-User-Id / X-User-Roles simulent ce que la Gateway ajoute après validation du JWT Keycloak.\n• Lancer le service avec le profil standalone pour un catalogue simulé (cours 1 à 7).\n• Runner : exécuter les dossiers 0 → 3 dans l'ordre.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Santé du service",
+      "item": [
+        {
+          "name": "Actuator health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Vérifie que marketplace-service répond (MySQL, RabbitMQ, Eureka)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Le service répond\", () => pm.expect([200, 503]).to.include(pm.response.code));",
+                  "const h = pm.response.json();",
+                  "console.log(\"Statut global : \" + h.status);",
+                  "Object.entries(h.components || {}).forEach(([k, v]) => console.log(\"  • \" + k + \" : \" + v.status));",
+                  "pm.test(\"Base MySQL UP\", () => pm.expect(h.components.db.status).to.eql(\"UP\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Parcours étudiant (exécuter dans l'ordre)",
+      "description": "Scénario complet : commande → paiement refusé → paiement accepté → facture → événement PaymentCompleted. Un nouvel étudiant (UUID) est généré à chaque exécution pour pouvoir rejouer le scénario.",
+      "item": [
+        {
+          "name": "1.1 Créer une commande (2 cours)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Le Marketplace interroge course-service (OpenFeign) pour chaque cours puis fige titre et prix dans order_items.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseIds\": [\n    1,\n    2\n  ],\n  \"currency\": \"TND\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Nouvel étudiant à chaque run -> scénario rejouable sans conflit \"déjà acheté\"",
+                  "pm.collectionVariables.set(\"studentId\", \"postman-\" + pm.variables.replaceIn(\"{{$guid}}\"));",
+                  "console.log(\"Étudiant de test : \" + pm.collectionVariables.get(\"studentId\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const o = pm.response.json();",
+                  "pm.collectionVariables.set(\"orderId\", o.id);",
+                  "pm.test(\"Commande PENDING\", () => pm.expect(o.status).to.eql(\"PENDING\"));",
+                  "pm.test(\"2 lignes avec snapshot titre + prix\", () => {",
+                  "    pm.expect(o.items).to.have.lengthOf(2);",
+                  "    o.items.forEach(i => { pm.expect(i.courseTitle).to.be.a(\"string\"); pm.expect(i.unitPrice).to.be.above(0); });",
+                  "});",
+                  "pm.test(\"Total = somme des prix unitaires\", () => {",
+                  "    const sum = o.items.reduce((s, i) => s + i.unitPrice, 0);",
+                  "    pm.expect(o.totalAmount).to.eql(Math.round(sum * 100) / 100);",
+                  "});",
+                  "pm.test(\"En-tête Location présent\", () => pm.response.to.have.header(\"Location\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.2 Mes commandes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "my"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const list = pm.response.json();",
+                  "pm.test(\"La commande créée apparaît dans l'historique\", () =>",
+                  "    pm.expect(list.map(o => o.id)).to.include(pm.collectionVariables.get(\"orderId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.3 Détail de la commande",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "pm.test(\"Bonne commande\", () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get(\"orderId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.4 Modifier la commande (cours 1 + 3)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseIds\": [\n    1,\n    3\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const o = pm.response.json();",
+                  "pm.test(\"Les cours sont maintenant 1 et 3\", () => pm.expect(o.items.map(i => i.courseId).sort()).to.eql([1,3]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.5 Paiement REFUSÉ (carte 4000…0002)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "checkout"
+              ]
+            },
+            "description": "Carte de test Stripe déclinée → 402 Payment Required. La tentative est quand même historisée.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": {{orderId}},\n  \"method\": \"STRIPE\",\n  \"cardNumber\": \"4000000000000002\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 402\", () => pm.response.to.have.status(402));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Paiement FAILED, commande FAILED\", () => {",
+                  "    pm.expect(r.paymentStatus).to.eql(\"FAILED\");",
+                  "    pm.expect(r.orderStatus).to.eql(\"FAILED\");",
+                  "});",
+                  "pm.test(\"Aucune facture émise\", () => pm.expect(r.invoice).to.be.null);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.6 Paiement ACCEPTÉ (Stripe 4242…)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "checkout"
+              ]
+            },
+            "description": "SUCCESS → commande PAID + facture + un événement PaymentCompleted par cours (après commit).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": {{orderId}},\n  \"method\": \"STRIPE\",\n  \"cardNumber\": \"4242424242424242\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Paiement SUCCESS, commande PAID\", () => {",
+                  "    pm.expect(r.paymentStatus).to.eql(\"SUCCESS\");",
+                  "    pm.expect(r.orderStatus).to.eql(\"PAID\");",
+                  "});",
+                  "pm.test(\"Référence Stripe pi_…\", () => pm.expect(r.payment.transactionRef).to.match(/^pi_/));",
+                  "pm.test(\"Facture INV-AAAA-NNNNNN émise\", () => pm.expect(r.invoice.invoiceNumber).to.match(/^INV-\\d{4}-\\d{6}$/));",
+                  "pm.collectionVariables.set(\"paymentId\", r.payment.id);",
+                  "pm.collectionVariables.set(\"invoiceId\", r.invoice.id);",
+                  "pm.collectionVariables.set(\"invoiceNumber\", r.invoice.invoiceNumber);",
+                  "console.log(\"📤 PaymentCompleted publié sur RabbitMQ → vérifier la console http://localhost:15672\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.7 Consulter la facture",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/{{invoiceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "{{invoiceId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const inv = pm.response.json();",
+                  "pm.test(\"Facture complète\", () => {",
+                  "    pm.expect(inv.invoiceNumber).to.eql(pm.collectionVariables.get(\"invoiceNumber\"));",
+                  "    pm.expect(inv.items).to.have.lengthOf(2);",
+                  "    pm.expect(inv.paymentMethod).to.eql(\"STRIPE\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.8 Facture par commande",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/order/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "order",
+                "{{orderId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.9 Historique des paiements de la commande",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/order/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "order",
+                "{{orderId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const p = pm.response.json();",
+                  "pm.test(\"2 tentatives : FAILED puis SUCCESS\", () => pm.expect(p.map(x => x.status)).to.eql([\"FAILED\",\"SUCCESS\"]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.10 [Feign community] Acheteur vérifié ?",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/check-purchase?studentId={{studentId}}&courseId=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "check-purchase"
+              ],
+              "query": [
+                {
+                  "key": "studentId",
+                  "value": "{{studentId}}"
+                },
+                {
+                  "key": "courseId",
+                  "value": "3"
+                }
+              ]
+            },
+            "description": "Endpoint appelé par community-service pour le badge « Acheteur Vérifié »."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "pm.test(\"purchased = true\", () => pm.expect(pm.response.json().purchased).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Backoffice ADMIN (CRUD)",
+      "item": [
+        {
+          "name": "2.1 Tableau de bord (KPI)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "stats"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const s = pm.response.json();",
+                  "pm.test(\"KPI présents\", () => pm.expect(s).to.include.keys(\"totalOrders\",\"paidOrders\",\"totalRevenue\",\"paymentSuccessRate\",\"topCourses\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.2 Liste paginée des commandes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?page=0&size=5&sort=createdAt,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const p = pm.response.json();",
+                  "pm.test(\"Page de 5 max\", () => pm.expect(p.content.length).to.be.at.most(5));",
+                  "pm.test(\"Métadonnées de pagination\", () => pm.expect(p).to.include.keys(\"page\",\"size\",\"totalElements\",\"totalPages\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.3 Filtrer : commandes PAID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?status=PAID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PAID"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "pm.test(\"Toutes PAID\", () => pm.response.json().content.forEach(o => pm.expect(o.status).to.eql(\"PAID\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.4 Recherche libre (titre de cours)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?q=python",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "python"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.5 Filtrer par cours + période",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?courseId=1&from=2026-01-01&to=2026-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "1"
+                },
+                {
+                  "key": "from",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-12-31"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.6 Créer une commande pour un étudiant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "L'ADMIN peut créer une commande pour un étudiant (champ studentId). Pour un STUDENT, ce champ est ignoré.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseIds\": [\n    5\n  ],\n  \"studentId\": \"{{studentId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const o = pm.response.json();",
+                  "pm.collectionVariables.set(\"adminOrderId\", o.id);",
+                  "pm.test(\"Commande attribuée à l'étudiant ciblé\", () => pm.expect(o.studentId).to.eql(pm.collectionVariables.get(\"studentId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.7 Passer la commande en FAILED",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{adminOrderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{adminOrderId}}",
+                "status"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"FAILED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "pm.test(\"FAILED\", () => pm.expect(pm.response.json().status).to.eql(\"FAILED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.8 Remettre en PENDING",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{adminOrderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{adminOrderId}}",
+                "status"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PENDING\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "pm.test(\"PENDING\", () => pm.expect(pm.response.json().status).to.eql(\"PENDING\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.9 Paiement PayPal par l'admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "checkout"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": {{adminOrderId}},\n  \"method\": \"PAYPAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "pm.test(\"Référence PAYID-…\", () => pm.expect(pm.response.json().payment.transactionRef).to.match(/^PAYID-/));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.10 Rembourser la commande",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{adminOrderId}}/refund",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{adminOrderId}}",
+                "refund"
+              ]
+            },
+            "description": "Publie l'événement OrderRefunded (routing key order.refunded)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "pm.test(\"REFUNDED\", () => pm.expect(pm.response.json().status).to.eql(\"REFUNDED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.11 Créer une commande à supprimer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseIds\": [\n    6\n  ],\n  \"studentId\": \"{{studentId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "pm.collectionVariables.set(\"deleteOrderId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.12 Supprimer la commande (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{deleteOrderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{deleteOrderId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 204\", () => pm.response.to.have.status(204));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.13 Vérifier la suppression (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{deleteOrderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{deleteOrderId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(404);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.14 Journal des transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.15 Transactions refusées Stripe",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments?status=FAILED&method=STRIPE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "FAILED"
+                },
+                {
+                  "key": "method",
+                  "value": "STRIPE"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "pm.test(\"Filtre appliqué\", () => pm.response.json().content.forEach(p => { pm.expect(p.status).to.eql(\"FAILED\"); pm.expect(p.method).to.eql(\"STRIPE\"); }));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.16 Détail d'une transaction",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.17 Registre des factures",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.18 Facture par numéro",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/number/{{invoiceNumber}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "number",
+                "{{invoiceNumber}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Cas d'erreur (codes HTTP)",
+      "item": [
+        {
+          "name": "400 — liste de cours vide",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseIds\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(400);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);",
+                  "",
+                  "pm.test(\"Détail du champ invalide\", () => pm.expect(pm.response.json().validationErrors).to.have.property(\"courseIds\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — devise invalide",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseIds\": [\n    1\n  ],\n  \"currency\": \"dinar\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(400);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — méthode de paiement inconnue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "checkout"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"method\": \"BITCOIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(400);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — cours non publié (DRAFT)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "En profil standalone, le cours 7 est DRAFT.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseIds\": [\n    7\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(400);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — transition vers PAID interdite",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            },
+            "description": "Commande déjà PAID → 400 (même statut). Un paiement passe obligatoirement par /checkout.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAID\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(400);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "401 — sans en-tête X-User-Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "my"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(401);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "403 — un STUDENT liste toutes les commandes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(403);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "403 — commande d'un autre étudiant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "autre-etudiant-9999"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(403);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 — commande inexistante",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "999999"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(404);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 — cours inexistant au catalogue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseIds\": [\n    999\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(404);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 — double paiement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "checkout"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": {{orderId}},\n  \"method\": \"PAYPAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(409);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 — cours déjà acheté",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseIds\": [\n    1\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(409);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 — supprimer une commande payée",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{studentId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "STUDENT"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "etudiant@esprit.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(409);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 — rembourser une commande supprimée",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{deleteOrderId}}/refund",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{deleteOrderId}}",
+                "refund"
+              ]
+            },
+            "description": "La commande a été supprimée en 2.12 → 404 attendu."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(404);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 — supprimer une commande remboursée",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{adminId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "ADMIN"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "admin@learnhub.tn"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{adminOrderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{adminOrderId}}"
+              ]
+            },
+            "description": "Une commande remboursée garde sa facture légale : suppression interdite."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Temps de réponse < 2 s\", () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+                  "",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Format d'erreur standard { timestamp, status, error, message, path }\", () => {",
+                  "    pm.expect(e).to.include.keys(\"timestamp\", \"status\", \"error\", \"message\", \"path\");",
+                  "    pm.expect(e.status).to.eql(409);",
+                  "});",
+                  "console.log(\"➜ \" + e.message);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8085"
+    },
+    {
+      "key": "studentId",
+      "value": "a1b2c3d4-0000-4000-8000-000000000001"
+    },
+    {
+      "key": "adminId",
+      "value": "admin-0000-4000-8000-000000000099"
+    },
+    {
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "key": "adminOrderId",
+      "value": ""
+    },
+    {
+      "key": "deleteOrderId",
+      "value": ""
+    },
+    {
+      "key": "paymentId",
+      "value": ""
+    },
+    {
+      "key": "invoiceId",
+      "value": ""
+    },
+    {
+      "key": "invoiceNumber",
+      "value": ""
+    }
+  ]
+}

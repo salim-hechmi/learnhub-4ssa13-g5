@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnHub — Backoffice Marketplace</title>
+<style>
+html, body { margin: 0; background: #0b1120; }
+/* =====================================================================
+   LearnHub — Marketplace Backoffice
+   Reprend la charte de l'interface commune du groupe : fond slate sombre,
+   cartes vitrées, accents bleu #2563eb, pastilles émeraude / ambre / rouge.
+   Fichier autonome (aucune dépendance Tailwind).
+   ===================================================================== */
+.mk {
+  --bg: #0b1120; --bg-2: #0f172a; --panel: rgba(30, 41, 59, .62); --panel-2: rgba(15, 23, 42, .78);
+  --line: rgba(51, 65, 85, .6); --line-2: rgba(71, 85, 105, .55);
+  --text: #f1f5f9; --text-2: #cbd5e1; --muted: #94a3b8; --faint: #64748b;
+  --blue: #2563eb; --blue-2: #3b82f6; --blue-soft: rgba(59, 130, 246, .14);
+  --emerald: #34d399; --emerald-soft: rgba(16, 185, 129, .13);
+  --amber: #fbbf24; --amber-soft: rgba(245, 158, 11, .13);
+  --red: #f87171; --red-soft: rgba(239, 68, 68, .13);
+  --purple: #c084fc; --purple-soft: rgba(168, 85, 247, .14);
+  --orange: #fb923c; --indigo: #818cf8;
+  --r-lg: 16px; --r-md: 12px; --r-sm: 8px;
+  --shadow: 0 20px 45px -20px rgba(0, 0, 0, .6);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--text); background: var(--bg);
+  min-height: 100vh; padding: 24px; display: flex; flex-direction: column; gap: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+.mk *, .mk *::before, .mk *::after { box-sizing: border-box; }
+.mk code, .mk .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* ---------- Surfaces ---------- */
+.mk-panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
+  backdrop-filter: blur(12px); box-shadow: var(--shadow); }
+.mk-card { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r-md); }
+.mk-pad { padding: 20px; }
+
+/* ---------- Header ---------- */
+.mk-header { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; padding: 18px 22px; }
+.mk-crumb { font-size: 12px; color: var(--faint); margin-bottom: 4px; }
+.mk-crumb a { color: var(--muted); text-decoration: none; } .mk-crumb a:hover { color: var(--text-2); }
+.mk-h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; display: flex; gap: 10px; align-items: center; }
+.mk-sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.mk-ico { width: 15px; height: 15px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.mk-inspector { display: flex; gap: 8px; align-items: center; justify-content: center; font: 11px "JetBrains Mono", monospace; color: var(--faint); }
+.mk-inspector .path { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
+
+/* ---------- Onglets ---------- */
+.mk-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.mk-tab { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: var(--r-md); white-space: nowrap;
+  border: 1px solid var(--line); background: rgba(30, 41, 59, .55); color: var(--text-2); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: .15s; text-decoration: none; font-family: inherit; }
+.mk-tab:hover { background: rgba(30, 41, 59, .95); color: #fff; }
+.mk-tab.active { background: var(--blue); color: #fff; border-color: transparent; box-shadow: 0 6px 16px -4px rgba(37, 99, 235, .55); }
+.mk-tab .count { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: rgba(255, 255, 255, .14); }
+
+/* ---------- KPI ---------- */
+.mk-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+.mk-kpi { padding: 16px 18px; position: relative; overflow: hidden; }
+.mk-kpi .label { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.mk-kpi .value { font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin-top: 6px; }
+.mk-kpi .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.mk-kpi.blue .value { color: #93c5fd; } .mk-kpi.emerald .value { color: var(--emerald); }
+.mk-kpi.amber .value { color: var(--amber); } .mk-kpi.purple .value { color: var(--purple); }
+
+.mk-grid-2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; }
+@media (max-width: 1000px) { .mk-grid-2 { grid-template-columns: 1fr; } }
+.mk-section-title { display: flex; justify-content: space-between; align-items: center; margin: 0 0 14px; font-size: 14px; font-weight: 800; }
+.mk-section-title small { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+/* Barres de répartition */
+.mk-bars { display: flex; flex-direction: column; gap: 12px; }
+.mk-bar-row { display: grid; grid-template-columns: 96px 1fr 44px; gap: 10px; align-items: center; font-size: 12px; }
+.mk-bar { height: 10px; border-radius: 999px; background: rgba(51, 65, 85, .55); overflow: hidden; }
+.mk-bar > span { display: block; height: 100%; border-radius: 999px; transition: width .6s cubic-bezier(.2, .8, .2, 1); }
+
+/* Anneau de taux de succès */
+.mk-ring { --p: 0; width: 132px; height: 132px; border-radius: 50%; display: grid; place-items: center; margin: 6px auto 10px;
+  background: conic-gradient(var(--emerald) calc(var(--p) * 1%), rgba(51, 65, 85, .55) 0); }
+.mk-ring > div { width: 104px; height: 104px; border-radius: 50%; background: var(--bg-2); display: grid; place-items: center; text-align: center; }
+.mk-ring b { font-size: 24px; font-weight: 900; } .mk-ring small { display: block; font-size: 11px; color: var(--muted); }
+
+/* ---------- Barre d'outils / formulaires ---------- */
+.mk-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding-bottom: 16px;
+  border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.mk-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mk-input, .mk-select { background: rgba(2, 6, 23, .75); border: 1px solid var(--line-2); color: var(--text); border-radius: var(--r-md);
+  padding: 9px 12px; font-size: 13px; outline: none; transition: border-color .15s, box-shadow .15s; font-family: inherit; }
+.mk-input:focus, .mk-select:focus { border-color: var(--blue-2); box-shadow: 0 0 0 3px rgba(59, 130, 246, .18); }
+.mk-input::placeholder { color: var(--faint); }
+.mk-search { position: relative; } .mk-search .mk-input { padding-left: 34px; width: 260px; }
+.mk-search::before { content: ""; position: absolute; left: 12px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%); background: var(--faint);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center / contain no-repeat; }
+.mk-label { display: block; font-size: 12px; font-weight: 800; color: var(--text-2); margin-bottom: 6px; }
+.mk-help { font-size: 11px; color: var(--faint); margin-top: 5px; }
+.mk-field + .mk-field { margin-top: 14px; }
+.mk-field-error { color: var(--red); font-size: 11px; margin-top: 5px; }
+
+.mk-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid transparent; border-radius: var(--r-md);
+  padding: 9px 15px; font-size: 13px; font-weight: 800; cursor: pointer; transition: .15s; font-family: inherit; color: #fff; background: #1e293b; }
+.mk-btn:disabled { opacity: .5; cursor: not-allowed; }
+.mk-btn.primary { background: var(--blue); } .mk-btn.primary:hover:not(:disabled) { background: var(--blue-2); }
+.mk-btn.success { background: #059669; } .mk-btn.success:hover:not(:disabled) { background: #10b981; }
+.mk-btn.ghost { background: rgba(30, 41, 59, .7); border-color: var(--line-2); color: var(--text-2); } .mk-btn.ghost:hover { color: #fff; background: #1e293b; }
+.mk-btn.danger { background: var(--red-soft); color: var(--red); border-color: rgba(248, 113, 113, .3); } .mk-btn.danger:hover { background: rgba(239, 68, 68, .22); }
+.mk-btn.warn { background: var(--amber-soft); color: var(--amber); border-color: rgba(251, 191, 36, .3); }
+.mk-btn.sm { padding: 5px 10px; font-size: 11.5px; border-radius: var(--r-sm); }
+.mk-icon-btn { width: 30px; height: 30px; padding: 0; border-radius: var(--r-sm); }
+
+/* ---------- Tableau ---------- */
+.mk-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-md); background: rgba(2, 6, 23, .45); }
+.mk-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mk-table thead th { text-align: left; padding: 11px 14px; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted);
+  background: rgba(15, 23, 42, .92); border-bottom: 1px solid var(--line); font-weight: 800; white-space: nowrap; }
+.mk-table td { padding: 12px 14px; border-bottom: 1px solid rgba(51, 65, 85, .35); vertical-align: middle; color: var(--text-2); }
+.mk-table tbody tr { transition: background .12s; cursor: default; }
+.mk-table tbody tr:hover { background: rgba(30, 41, 59, .55); }
+.mk-table tbody tr.clickable { cursor: pointer; }
+.mk-table tbody tr:last-child td { border-bottom: none; }
+.mk-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.mk-table .actions { text-align: right; white-space: nowrap; }
+.mk-id { font: 700 12px "JetBrains Mono", monospace; color: var(--muted); }
+.mk-strong { color: #fff; font-weight: 700; }
+.mk-amount { color: #fff; font-weight: 800; font-variant-numeric: tabular-nums; }
+.mk-muted { color: var(--muted); } .mk-small { font-size: 11.5px; }
+
+.mk-pagination { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+.mk-pages { display: flex; gap: 6px; }
+
+/* ---------- Badges ---------- */
+.mk-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 800;
+  letter-spacing: .03em; border: 1px solid; white-space: nowrap; }
+.mk-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.mk-badge.PAID, .mk-badge.SUCCESS { color: var(--emerald); background: var(--emerald-soft); border-color: rgba(52, 211, 153, .28); }
+.mk-badge.PENDING { color: var(--amber); background: var(--amber-soft); border-color: rgba(251, 191, 36, .28); }
+.mk-badge.FAILED { color: var(--red); background: var(--red-soft); border-color: rgba(248, 113, 113, .28); }
+.mk-badge.REFUNDED { color: var(--purple); background: var(--purple-soft); border-color: rgba(192, 132, 252, .28); }
+.mk-method { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text-2); }
+.mk-method i { font-style: normal; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; font-weight: 900; }
+.mk-method.STRIPE i { background: rgba(99, 102, 241, .2); color: #a5b4fc; }
+.mk-method.PAYPAL i { background: rgba(14, 165, 233, .18); color: #7dd3fc; }
+.mk-method.SIMULATOR i { background: rgba(148, 163, 184, .18); color: #cbd5e1; }
+
+.mk-chip { display: inline-flex; align-items: center; gap: 9px; }
+.mk-avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: #fff; flex-shrink: 0; }
+.mk-chip .name { color: #fff; font-weight: 700; font-size: 13px; line-height: 1.2; }
+.mk-chip .uuid { font: 10.5px "JetBrains Mono", monospace; color: var(--faint); }
+
+.mk-courses { display: flex; flex-direction: column; gap: 3px; max-width: 320px; }
+.mk-course-line { font-size: 12.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mk-more { font-size: 11px; color: var(--blue-2); font-weight: 700; }
+
+/* ---------- Modale & tiroir ---------- */
+.mk-backdrop { position: fixed; inset: 0; background: rgba(2, 6, 23, .72); backdrop-filter: blur(4px); z-index: 60; display: grid; place-items: center;
+  padding: 16px; animation: mk-fade .15s ease-out; }
+.mk-modal { width: 100%; max-width: 560px; max-height: calc(100vh - 32px); overflow: auto; background: #0f172a; border: 1px solid var(--line-2);
+  border-radius: 18px; box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .8); animation: mk-pop .18s cubic-bezier(.2, .9, .3, 1.2); }
+.mk-modal.wide { max-width: 760px; }
+.mk-modal-head { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+.mk-modal-head h3 { margin: 0; font-size: 16px; font-weight: 800; display: flex; gap: 8px; align-items: center; }
+.mk-modal-body { padding: 20px 22px; }
+.mk-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px; border-top: 1px solid var(--line); background: rgba(2, 6, 23, .35); }
+.mk-close { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; }
+.mk-close:hover { color: #fff; }
+@keyframes mk-fade { from { opacity: 0; } }
+@keyframes mk-pop { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+
+.mk-drawer-backdrop { position: fixed; inset: 0; background: rgba(2, 6, 23, .6); z-index: 55; animation: mk-fade .15s; }
+.mk-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 100vw); background: #0f172a; border-left: 1px solid var(--line-2);
+  z-index: 56; overflow-y: auto; animation: mk-slide .22s cubic-bezier(.2, .8, .2, 1); box-shadow: -30px 0 60px -20px rgba(0, 0, 0, .7); }
+@keyframes mk-slide { from { transform: translateX(40px); opacity: 0; } }
+
+/* Sélection de cours */
+.mk-course-pick { display: grid; gap: 8px; }
+.mk-course-opt { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: var(--r-md); border: 1px solid var(--line);
+  background: rgba(2, 6, 23, .5); cursor: pointer; transition: .12s; }
+.mk-course-opt:hover { border-color: var(--line-2); background: rgba(30, 41, 59, .6); }
+.mk-course-opt.on { border-color: rgba(59, 130, 246, .6); background: var(--blue-soft); }
+.mk-course-opt input { accent-color: var(--blue); width: 16px; height: 16px; }
+.mk-course-opt .t { flex: 1; font-size: 13px; color: #fff; font-weight: 600; }
+.mk-course-opt .p { font-weight: 800; color: var(--emerald); font-size: 13px; }
+.mk-total { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 12px 14px; border-radius: var(--r-md);
+  background: rgba(2, 6, 23, .7); border: 1px dashed var(--line-2); font-size: 13px; }
+.mk-total b { font-size: 18px; color: var(--emerald); }
+
+/* Paiement */
+.mk-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mk-method-card { padding: 12px; border-radius: var(--r-md); border: 1px solid var(--line); background: rgba(2, 6, 23, .5); cursor: pointer; text-align: center; transition: .12s; }
+.mk-method-card.on { border-color: rgba(59, 130, 246, .7); background: var(--blue-soft); }
+.mk-method-card b { display: block; font-size: 13px; margin-top: 4px; } .mk-method-card small { color: var(--muted); font-size: 11px; }
+.mk-test-cards { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.mk-test-cards button { font: 11px "JetBrains Mono", monospace; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line-2); background: rgba(2, 6, 23, .6); color: var(--text-2); cursor: pointer; }
+.mk-result { padding: 14px 16px; border-radius: var(--r-md); }
+.mk-result.ok { background: var(--emerald-soft); border: 1px solid rgba(52, 211, 153, .3); }
+.mk-result.ko { background: var(--red-soft); border: 1px solid rgba(248, 113, 113, .3); }
+.mk-result h4 { margin: 0 0 4px; font-size: 14px; } .mk-result.ok h4 { color: var(--emerald); } .mk-result.ko h4 { color: var(--red); }
+.mk-result p { margin: 0; font-size: 12.5px; color: var(--text-2); }
+
+/* Timeline */
+.mk-timeline { position: relative; padding-left: 22px; display: flex; flex-direction: column; gap: 14px; }
+.mk-timeline::before { content: ""; position: absolute; left: 7px; top: 6px; bottom: 6px; width: 2px; background: var(--line-2); }
+.mk-tl { position: relative; font-size: 12.5px; }
+.mk-tl::before { content: ""; position: absolute; left: -20px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg-2); border: 2px solid var(--muted); }
+.mk-tl.ok::before { border-color: var(--emerald); background: var(--emerald); } .mk-tl.ko::before { border-color: var(--red); background: var(--red); }
+.mk-tl.info::before { border-color: var(--blue-2); } .mk-tl.refund::before { border-color: var(--purple); background: var(--purple); }
+.mk-tl b { color: #fff; } .mk-tl .when { color: var(--faint); font-size: 11px; }
+
+.mk-kv { display: grid; grid-template-columns: 130px 1fr; gap: 8px 12px; font-size: 12.5px; }
+.mk-kv dt { color: var(--muted); } .mk-kv dd { margin: 0; color: var(--text); word-break: break-all; }
+
+/* ---------- Facture (papier) ---------- */
+.mk-invoice { background: #fff; color: #0f172a; border-radius: 12px; padding: 30px; font-size: 13px; }
+.mk-invoice .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #0f172a; padding-bottom: 16px; }
+.mk-invoice .brand { font-size: 20px; font-weight: 900; } .mk-invoice .brand span { color: #2563eb; }
+.mk-invoice .stamp { display: inline-block; border: 2px solid #059669; color: #059669; font-weight: 800; padding: 3px 10px; border-radius: 6px; letter-spacing: .08em; font-size: 12px; }
+.mk-invoice .stamp.refunded { border-color: #9333ea; color: #9333ea; }
+.mk-invoice table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+.mk-invoice th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 8px 4px; }
+.mk-invoice td { padding: 10px 4px; border-bottom: 1px solid #f1f5f9; }
+.mk-invoice .tot { display: flex; justify-content: flex-end; } .mk-invoice .tot table { width: 260px; margin: 0; }
+.mk-invoice .tot td { border: none; padding: 4px; } .mk-invoice .grand td { font-size: 16px; font-weight: 900; border-top: 2px solid #0f172a; padding-top: 8px; }
+.mk-invoice .foot { margin-top: 18px; font-size: 11px; color: #64748b; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- États ---------- */
+.mk-empty { text-align: center; padding: 44px 16px; color: var(--muted); }
+.mk-empty b { display: block; color: var(--text-2); margin-bottom: 4px; }
+.mk-skel { height: 14px; border-radius: 6px; background: linear-gradient(90deg, rgba(51, 65, 85, .4), rgba(71, 85, 105, .65), rgba(51, 65, 85, .4));
+  background-size: 200% 100%; animation: mk-shimmer 1.2s infinite; }
+@keyframes mk-shimmer { to { background-position: -200% 0; } }
+
+/* ---------- Toasts ---------- */
+.mk-toasts { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 80; max-width: 380px; }
+.mk-toast { display: flex; gap: 10px; padding: 12px 14px; border-radius: var(--r-md); background: #0f172a; border: 1px solid var(--line-2);
+  border-left-width: 3px; box-shadow: var(--shadow); font-size: 12.5px; animation: mk-pop .2s; cursor: pointer; }
+.mk-toast.success { border-left-color: var(--emerald); } .mk-toast.error { border-left-color: var(--red); } .mk-toast.info { border-left-color: var(--blue-2); }
+.mk-toast b { display: block; color: #fff; } .mk-toast span { color: var(--muted); }
+
+.mk-footer { text-align: center; font-size: 11px; color: var(--faint); }
+
+@media print {
+  body * { visibility: hidden !important; }
+  .mk-invoice, .mk-invoice * { visibility: visible !important; }
+  .mk-invoice { position: fixed; inset: 0; border-radius: 0; }
+}
+
+.mk-mode { display: inline-flex; padding: 3px; border-radius: 10px; background: rgba(2,6,23,.7); border: 1px solid var(--line); }
+.mk-mode button { border: 0; background: none; color: var(--muted); font-weight: 700; font-size: 11px; padding: 6px 10px; border-radius: 7px; cursor: pointer; font-family: inherit; }
+.mk-mode button.on { background: #fff; color: #0f172a; }
+.mk-right { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; max-width: 100%; }
+.mk-view { display: flex; flex-direction: column; gap: 16px; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="mk" id="app">
+  <header class="mk-panel mk-header">
+    <div>
+      <div class="mk-crumb">Administration / Marketplace</div>
+      <h1 class="mk-h1">Marketplace</h1>
+      <p class="mk-sub">Commandes, paiements et factures des cours.</p>
+    </div>
+    <div class="mk-right">
+      <div class="mk-mode" title="Source des données">
+        <button id="mode-demo" class="on" onclick="setMode('demo')">Démo</button>
+        <button id="mode-live" onclick="setMode('live')">API</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="mk-tabs" id="tabs">
+    <button class="mk-tab active" data-v="dashboard">Tableau de bord</button>
+    <button class="mk-tab" data-v="orders">Commandes <span class="count" id="cnt-orders">0</span></button>
+    <button class="mk-tab" data-v="payments">Transactions</button>
+    <button class="mk-tab" data-v="invoices">Factures</button>
+  </nav>
+
+  <main id="view" class="mk-view"></main>
+
+  <div class="mk-inspector" title="Dernier appel à l'API">
+    <span id="tr-m">GET</span><span id="tr-p" class="path">/api/orders/stats</span><span id="tr-s">200</span><span id="tr-ms">0 ms</span>
+  </div>
+  <div class="mk-toasts" id="toasts"></div>
+  <div id="overlay"></div>
+</div>
+
+<script>
+/* =====================================================================
+   1. Données de démonstration — mêmes règles métier que le backend
+   ===================================================================== */
+const CATALOG = [
+  { id: 1, title: 'Développement web : HTML, CSS et JavaScript', price: 59, status: 'PUBLISHED' },
+  { id: 2, title: 'Python pour débutants', price: 45, status: 'PUBLISHED' },
+  { id: 3, title: 'Bases de données et SQL', price: 39, status: 'PUBLISHED' },
+  { id: 4, title: 'React : créer des interfaces modernes', price: 69, status: 'PUBLISHED' },
+  { id: 5, title: 'Excel pour la gestion de données', price: 35, status: 'PUBLISHED' },
+  { id: 6, title: 'Anglais professionnel (niveau B2)', price: 55, status: 'PUBLISHED' },
+  { id: 7, title: 'Introduction au Machine Learning', price: 89, status: 'DRAFT' }
+];
+const CURRENCY = 'TND';
+const U = n => 'a1b2c3d4-0000-4000-8000-00000000000' + n;
+const NAMES = { [U(1)]: 'Yasmine Trabelsi', [U(2)]: 'Karim Ben Salah', [U(3)]: 'Ines Gharbi', [U(4)]: 'Mehdi Jaziri', [U(5)]: 'Salma Bouazizi' };
+const STATUS_TXT = { PENDING: 'en attente', PAID: 'payée', FAILED: 'échouée', REFUNDED: 'remboursée' };
+const db = { orders: [], payments: [], invoices: [], seq: { o: 0, i: 0, p: 0, inv: 0 } };
+
+function iso(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19); }
+function rnd(n, up) { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; let s = ''; for (let i = 0; i < n; i++) s += a[Math.floor(Math.random() * a.length)]; return up ? s.toUpperCase() : s; }
+function txRef(m) { const t = new Date(); return m === 'STRIPE' ? 'pi_' + rnd(24) : m === 'PAYPAL' ? 'PAYID-' + rnd(20, 1) : 'SIM-' + iso(t).replace(/\D/g, '').slice(0, 14) + '-' + rnd(6, 1); }
+
+function seed() {
+  const now = Date.now(), H = 3600e3, D = 24 * H;
+  const rows = [
+    [U(1), 13, 'PAID', 'STRIPE', false, [1, 2]], [U(2), 12, 'PAID', 'PAYPAL', false, [2]], [U(3), 10, 'PAID', 'STRIPE', true, [3, 4]],
+    [U(4), 9, 'PAID', 'STRIPE', false, [1]], [U(5), 8, 'FAILED', 'STRIPE', false, [6]], [U(1), 7, 'REFUNDED', 'PAYPAL', false, [5]],
+    [U(2), 5, 'PAID', 'STRIPE', false, [4, 6]], [U(3), 4, 'PENDING', null, false, [1]], [U(4), 3, 'PAID', 'PAYPAL', false, [4]],
+    [U(5), 2, 'PAID', 'STRIPE', true, [1, 5]], [U(4), 1, 'PENDING', null, false, [6, 3]], [U(5), 0.125, 'FAILED', 'PAYPAL', false, [2]]
+  ];
+  rows.forEach(([s, days, status, method, failedFirst, courses]) => {
+    const created = new Date(now - days * D);
+    const o = { id: ++db.seq.o, studentId: s, status, currency: 'TND', createdAt: iso(created), paidAt: null,
+      items: courses.map(c => { const k = CATALOG.find(x => x.id === c); return { id: ++db.seq.i, courseId: k.id, courseTitle: k.title, unitPrice: k.price }; }) };
+    o.totalAmount = o.items.reduce((a, b) => a + b.unitPrice, 0);
+    db.orders.push(o);
+    const pay = st => db.payments.push({ id: ++db.seq.p, orderId: o.id, amount: o.totalAmount, method, status: st, transactionRef: txRef(method) });
+    if (failedFirst) pay('FAILED');
+    if (status === 'FAILED') pay('FAILED');
+    if (status === 'PAID' || status === 'REFUNDED') {
+      o.paidAt = iso(new Date(created.getTime() + 4 * 60e3)); pay('SUCCESS');
+      db.invoices.push({ id: ++db.seq.inv, orderId: o.id, invoiceNumber: 'INV-' + o.paidAt.slice(0, 4) + '-' + String(o.id).padStart(6, '0'), issuedAt: o.paidAt });
+    }
+  });
+}
+seed();
+
+/* ----- Projection en DTOs (identiques aux réponses Spring) ----- */
+const payDto = p => { const o = db.orders.find(x => x.id === p.orderId); return { ...p, studentId: o.studentId, currency: o.currency }; };
+function invDto(inv) {
+  const o = db.orders.find(x => x.id === inv.orderId);
+  const ok = db.payments.filter(p => p.orderId === o.id && p.status === 'SUCCESS').pop();
+  return { ...inv, studentId: o.studentId, items: o.items, totalAmount: o.totalAmount, currency: o.currency, paidAt: o.paidAt,
+    paymentMethod: ok ? ok.method : null, transactionRef: ok ? ok.transactionRef : null, orderStatus: o.status };
+}
+function orderDto(o) {
+  const inv = db.invoices.find(i => i.orderId === o.id);
+  return { ...o, itemsCount: o.items.length, items: o.items.map(i => ({ ...i })),
+    payments: db.payments.filter(p => p.orderId === o.id).map(payDto), invoiceId: inv ? inv.id : null, invoiceNumber: inv ? inv.invoiceNumber : null };
+}
+const page = (arr, p, size) => ({ content: arr.slice(p * size, p * size + size), page: p, size, totalElements: arr.length,
+  totalPages: Math.ceil(arr.length / size), last: (p + 1) * size >= arr.length });
+const err = (status, error, message, path, validationErrors) => { throw { status, body: { timestamp: iso(new Date()), status, error, message, path, validationErrors } }; };
+
+/* =====================================================================
+   2. API — mode démo (in-memory) ou mode réel (fetch vers le backend)
+   ===================================================================== */
+const ADMIN = { id: 'admin-0000-4000-8000-000000000099', roles: 'ADMIN' };
+let MODE = 'demo';
+let LIVE_BASE = 'http://localhost:8085';
+
+const mock = {
+  'GET /api/orders/stats'() {
+    const c = s => db.orders.filter(o => o.status === s).length;
+    const paid = db.orders.filter(o => o.status === 'PAID');
+    const revenue = paid.reduce((a, o) => a + o.totalAmount, 0);
+    const okPays = db.payments.filter(p => p.status === 'SUCCESS').length;
+    const top = {};
+    paid.forEach(o => o.items.forEach(i => { top[i.courseId] = top[i.courseId] || { courseId: i.courseId, courseTitle: i.courseTitle, salesCount: 0, revenue: 0 }; top[i.courseId].salesCount++; top[i.courseId].revenue += i.unitPrice; }));
+    return { totalOrders: db.orders.length, pendingOrders: c('PENDING'), paidOrders: c('PAID'), failedOrders: c('FAILED'), refundedOrders: c('REFUNDED'),
+      totalRevenue: revenue, averageBasket: paid.length ? Math.round(revenue / paid.length * 100) / 100 : 0, currency: 'TND',
+      totalPayments: db.payments.length, successfulPayments: okPays, paymentSuccessRate: db.payments.length ? Math.round(okPays * 1000 / db.payments.length) / 10 : 0,
+      invoicesCount: db.invoices.length, topCourses: Object.values(top).sort((a, b) => b.salesCount - a.salesCount || b.revenue - a.revenue).slice(0, 5) };
+  },
+  'GET /api/orders'(q) {
+    let list = db.orders.slice();
+    if (q.status) list = list.filter(o => o.status === q.status);
+    if (q.courseId) list = list.filter(o => o.items.some(i => i.courseId === +q.courseId));
+    if (q.from) list = list.filter(o => o.createdAt.slice(0, 10) >= q.from);
+    if (q.to) list = list.filter(o => o.createdAt.slice(0, 10) <= q.to);
+    if (q.q) { const t = q.q.toLowerCase(), d = q.q.replace(/\D/g, '');
+      list = list.filter(o => o.studentId.toLowerCase().includes(t) || (NAMES[o.studentId] || '').toLowerCase().includes(t)
+        || o.items.some(i => i.courseTitle.toLowerCase().includes(t)) || (d && o.id === +d)); }
+    const [f, dir] = (q.sort || 'createdAt,desc').split(',');
+    list.sort((a, b) => (a[f] > b[f] ? 1 : a[f] < b[f] ? -1 : 0) * (dir === 'asc' ? 1 : -1));
+    return page(list.map(orderDto), +q.page || 0, +q.size || 10);
+  },
+  'GET /api/orders/:id'(q, id) { return orderDto(findOrder(id, '/api/orders/' + id)); },
+  'POST /api/orders'(q, _, body) {
+    const ids = [...new Set(body.courseIds || [])];
+    if (!ids.length) err(400, 'Bad Request', 'Validation échouée : 1 champ(s) invalide(s)', '/api/orders', { courseIds: 'La commande doit contenir au moins un cours' });
+    const studentId = (body.studentId || '').trim() || ADMIN.id;
+    if (body.currency && body.currency !== CURRENCY) err(400, 'Bad Request', 'Devise non prise en charge : ' + body.currency + '. Les cours sont vendus en ' + CURRENCY, '/api/orders');
+    const owned = ownedCourses(studentId, ids);
+    if (owned.length) err(409, 'Conflict', 'Cours déjà acheté(s) par cet étudiant : [' + owned + ']', '/api/orders');
+    const items = ids.map(c => { const k = CATALOG.find(x => x.id === c);
+      if (!k) err(404, 'Not Found', 'Cours introuvable dans le catalogue : id=' + c, '/api/orders');
+      if (k.status !== 'PUBLISHED') err(400, 'Bad Request', 'Le cours « ' + k.title + ' » n\'est pas encore publié : achat impossible', '/api/orders');
+      return { id: ++db.seq.i, courseId: k.id, courseTitle: k.title, unitPrice: k.price }; });
+    const o = { id: ++db.seq.o, studentId, status: 'PENDING', currency: CURRENCY, createdAt: iso(new Date()), paidAt: null, items, totalAmount: items.reduce((a, b) => a + b.unitPrice, 0) };
+    db.orders.push(o); return { __status: 201, body: orderDto(o) };
+  },
+  'PUT /api/orders/:id'(q, id, body) {
+    const o = findOrder(id, '/api/orders/' + id);
+    if (!['PENDING', 'FAILED'].includes(o.status)) err(409, 'Conflict', 'La commande #' + id + ' est ' + STATUS_TXT[o.status] + ' : seules les commandes en attente ou échouées sont modifiables', '/api/orders/' + id);
+    const res = mock['POST /api/orders']({}, null, { courseIds: body.courseIds, studentId: o.studentId, currency: body.currency }).body;
+    db.orders = db.orders.filter(x => x.id !== res.id); db.seq.o--;
+    o.items = res.items; o.totalAmount = res.totalAmount; o.currency = res.currency; if (o.status === 'FAILED') o.status = 'PENDING';
+    return orderDto(o);
+  },
+  'PATCH /api/orders/:id/status'(q, id, body) {
+    const o = findOrder(id, '/api/orders/' + id + '/status'), s = body.status, path = '/api/orders/' + id + '/status';
+    if (o.status === s) err(400, 'Bad Request', 'La commande #' + id + ' est déjà ' + STATUS_TXT[s], path);
+    if (s === 'REFUNDED') return mock['POST /api/orders/:id/refund']({}, id);
+    const ok = (o.status === 'PENDING' && s === 'FAILED') || (o.status === 'FAILED' && s === 'PENDING');
+    if (!ok) err(409, 'Conflict', s === 'PAID' ? 'Une commande ne peut passer à « payée » qu\'après un paiement accepté' : 'Impossible de passer une commande ' + STATUS_TXT[o.status] + ' à « ' + STATUS_TXT[s] + ' »', path);
+    o.status = s; return orderDto(o);
+  },
+  'POST /api/orders/:id/refund'(q, id) {
+    const o = findOrder(id, '/api/orders/' + id + '/refund');
+    if (o.status !== 'PAID') err(409, 'Conflict', 'Seule une commande payée peut être remboursée (commande #' + id + ' ' + STATUS_TXT[o.status] + ')', '/api/orders/' + id + '/refund');
+    o.status = 'REFUNDED'; return orderDto(o);
+  },
+  'DELETE /api/orders/:id'(q, id) {
+    const o = findOrder(id, '/api/orders/' + id);
+    if (!['PENDING', 'FAILED'].includes(o.status)) err(409, 'Conflict', 'La commande #' + id + ' est ' + STATUS_TXT[o.status] + ' : elle a une facture et ne peut pas être supprimée', '/api/orders/' + id);
+    db.orders = db.orders.filter(x => x.id !== o.id); db.payments = db.payments.filter(p => p.orderId !== o.id);
+    return { __status: 204, body: null };
+  },
+  'POST /api/payments/checkout'(q, _, b) {
+    const o = findOrder(b.orderId, '/api/payments/checkout');
+    if (o.status === 'PAID') err(409, 'Conflict', 'La commande #' + o.id + ' est déjà payée', '/api/payments/checkout');
+    if (o.status === 'REFUNDED') err(409, 'Conflict', 'La commande #' + o.id + ' a été remboursée : créez une nouvelle commande', '/api/payments/checkout');
+    if (b.method === 'STRIPE' && !b.cardNumber) err(400, 'Bad Request', 'Le numéro de carte est obligatoire pour un paiement par carte', '/api/payments/checkout');
+    const owned = ownedCourses(o.studentId, o.items.map(i => i.courseId));
+    if (owned.length) err(409, 'Conflict', 'Cours déjà acheté(s) dans une autre commande : [' + owned + ']. Retirez-les de la commande #' + o.id + ' avant de payer', '/api/payments/checkout');
+    const card = b.method === 'STRIPE' ? b.cardNumber : null;
+    let reason = null;
+    if (b.simulateFailure) reason = 'refus simulé';
+    else if (card && card.endsWith('0002')) reason = 'carte déclinée par la banque émettrice';
+    else if (card && card.endsWith('9995')) reason = 'fonds insuffisants';
+    const p = { id: ++db.seq.p, orderId: o.id, amount: o.totalAmount, method: b.method, status: reason ? 'FAILED' : 'SUCCESS', transactionRef: txRef(b.method) };
+    db.payments.push(p);
+    let invoice = null, message;
+    if (!reason) {
+      o.status = 'PAID'; o.paidAt = iso(new Date());
+      const inv = { id: ++db.seq.inv, orderId: o.id, invoiceNumber: 'INV-' + o.paidAt.slice(0, 4) + '-' + String(o.id).padStart(6, '0'), issuedAt: o.paidAt };
+      db.invoices.push(inv); invoice = invDto(inv);
+      message = 'Paiement accepté. Facture ' + inv.invoiceNumber + ' émise, l\'accès aux cours est en cours d\'activation.';
+    } else { o.status = 'FAILED'; message = 'Paiement refusé : ' + reason + '. Vous pouvez réessayer.'; }
+    return { __status: reason ? 402 : 200, body: { paymentStatus: p.status, orderStatus: o.status, message, payment: payDto(p), invoice } };
+  },
+  'GET /api/payments'(q) {
+    let l = db.payments.slice().reverse();
+    if (q.status) l = l.filter(p => p.status === q.status);
+    if (q.method) l = l.filter(p => p.method === q.method);
+    return page(l.map(payDto), +q.page || 0, +q.size || 10);
+  },
+  'GET /api/invoices'(q) { return page(db.invoices.slice().sort((a, b) => a.issuedAt < b.issuedAt ? 1 : -1).map(invDto), +q.page || 0, +q.size || 10); },
+  'GET /api/invoices/number/:n'(q, n) {
+    const inv = db.invoices.find(i => i.invoiceNumber === n);
+    if (!inv) err(404, 'Not Found', 'Facture introuvable : ' + n, '/api/invoices/number/' + n);
+    return invDto(inv);
+  }
+};
+function ownedCourses(studentId, courseIds) {
+  return courseIds.filter(c => db.orders.some(o => o.studentId === studentId && o.status === 'PAID' && o.items.some(i => i.courseId === c)));
+}
+function findOrder(id, path) { const o = db.orders.find(x => x.id === +id); if (!o) err(404, 'Not Found', 'Commande introuvable : id=' + id, path); return o; }
+
+const REASONS = { 200: 'OK', 201: 'Created', 204: 'No Content', 400: 'Bad Request', 401: 'Unauthorized', 402: 'Payment Required', 403: 'Forbidden', 404: 'Not Found', 409: 'Conflict', 0: 'Network Error' };
+const MCOL = { GET: '#34d399', POST: '#60a5fa', PUT: '#fbbf24', PATCH: '#fbbf24', DELETE: '#f87171' };
+
+async function call(method, path, query = {}, body) {
+  const qs = Object.entries(query).filter(([, v]) => v !== '' && v != null).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
+  const full = path + (qs ? '?' + qs : '');
+  const t0 = performance.now();
+  let status, data;
+  try {
+    if (MODE === 'live') {
+      const r = await fetch(LIVE_BASE + full, { method, headers: { 'Content-Type': 'application/json', 'X-User-Id': ADMIN.id, 'X-User-Roles': ADMIN.roles }, body: body ? JSON.stringify(body) : undefined });
+      status = r.status; data = r.status === 204 ? null : await r.json().catch(() => null);
+      if (!r.ok && r.status !== 402) throw { status, body: data };
+    } else {
+      await new Promise(r => setTimeout(r, 120 + Math.random() * 180));
+      const key = Object.keys(mock).find(k => { const [m, p] = k.split(' '); return m === method && new RegExp('^' + p.replace(/:\w+/g, '([^/]+)') + '$').test(path); });
+      const [, p] = key.split(' ');
+      const param = (path.match(new RegExp('^' + p.replace(/:\w+/g, '([^/]+)') + '$')) || [])[1];
+      const out = mock[key](query, param && decodeURIComponent(param), body);
+      if (out && out.__status) { status = out.__status; data = out.body; } else { status = 200; data = out; }
+    }
+    trace(method, full, status, t0); return { status, data };
+  } catch (e) {
+    const st = e.status ?? 0; trace(method, full, st, t0);
+    throw { status: st, body: e.body || { error: 'Service indisponible', message: 'Impossible de joindre ' + LIVE_BASE + '.' } };
+  }
+}
+function trace(m, p, s, t0) {
+  const el = id => document.getElementById(id);
+  el('tr-m').textContent = m;
+  el('tr-p').textContent = p;
+  el('tr-s').textContent = s || 'erreur'; el('tr-s').style.color = s && s < 300 ? '' : s && s < 500 ? 'var(--amber)' : 'var(--red)';
+  el('tr-ms').textContent = Math.round(performance.now() - t0) + ' ms';
+}
+function setMode(m, confirmed) {
+  if (m === 'live' && !confirmed) {
+    modal(`<div class="mk-modal-head"><h3>Connexion à l'API</h3><button class="mk-close" onclick="closeOverlay()">×</button></div>
+      <div class="mk-modal-body">
+        <label class="mk-label">URL du service</label>
+        <input class="mk-input mono" id="live-url" style="width:100%" value="${esc(LIVE_BASE)}">
+        <div class="mk-help">Service lancé en profil standalone (port 8085) ou API Gateway (port 8080).</div>
+      </div>
+      <div class="mk-modal-foot"><button class="mk-btn ghost" onclick="closeOverlay()">Annuler</button>
+        <button class="mk-btn primary" onclick="LIVE_BASE=$('#live-url').value.trim().replace(/\\/$/,'');closeOverlay();setMode('live',true)">Connecter</button></div>`);
+    return;
+  }
+  MODE = m;
+  document.getElementById('mode-demo').classList.toggle('on', m === 'demo');
+  document.getElementById('mode-live').classList.toggle('on', m === 'live');
+  toast('info', m === 'demo' ? 'Données de démonstration' : 'Connecté à ' + LIVE_BASE);
+  go(state.view);
+}
+
+/* =====================================================================
+   3. Helpers d'affichage
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = n => Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fdate = (s, time = true) => { if (!s) return '—'; const d = new Date(s); return d.toLocaleDateString('fr-FR') + (time ? ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''); };
+const LBL = { PENDING: 'En attente', PAID: 'Payée', FAILED: 'Échouée', REFUNDED: 'Remboursée', SUCCESS: 'Succès' };
+const badge = s => `<span class="mk-badge ${s}">${LBL[s] || s}</span>`;
+const method = m => `<span class="mk-method ${m}"><i>${{ STRIPE: 'S', PAYPAL: 'P', SIMULATOR: 'T' }[m]}</i>${{ STRIPE: 'Stripe', PAYPAL: 'PayPal', SIMULATOR: 'Simulateur' }[m]}</span>`;
+const ICONS = {
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  trash: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  refresh: '<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>',
+  print: '<path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7"/><path d="M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/>'
+};
+const ico = n => `<svg class="mk-ico" viewBox="0 0 24 24">${ICONS[n]}</svg>`;
+const PAL = ['#2563eb', '#7c3aed', '#059669', '#db2777', '#ea580c', '#0891b2', '#4f46e5'];
+const sname = id => NAMES[id] || (id.startsWith('admin') ? 'Administrateur' : 'Étudiant ' + id.slice(-4).toUpperCase());
+function student(id) {
+  let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const ini = sname(id).split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase();
+  return `<span class="mk-chip" title="${esc(id)}"><span class="mk-avatar" style="background:${PAL[h % PAL.length]}">${ini}</span><span class="name">${esc(sname(id))}</span></span>`;
+}
+function toast(kind, title, detail) {
+  const el = document.createElement('div');
+  el.className = 'mk-toast ' + kind;
+  el.innerHTML = `<div><b>${esc(title)}</b>${detail ? '<span>' + esc(detail) + '</span>' : ''}</div>`;
+  el.onclick = () => el.remove();
+  $('#toasts').appendChild(el); setTimeout(() => el.remove(), 4500);
+}
+function fail(e) {
+  const b = e.body || {};
+  const f = b.validationErrors ? ' ' + Object.values(b.validationErrors).join(' ') : '';
+  const titles = { 400: 'Requête invalide', 401: 'Non authentifié', 403: 'Accès refusé', 404: 'Introuvable', 409: 'Action impossible', 503: 'Service indisponible' };
+  toast('error', titles[e.status] || b.error || 'Erreur', (b.message || '') + f);
+}
+function modal(html, cls = '') {
+  $('#overlay').innerHTML = `<div class="mk-backdrop" onclick="if(event.target===this)closeOverlay()"><div class="mk-modal ${cls}">${html}</div></div>`;
+}
+function closeOverlay() { $('#overlay').innerHTML = ''; }
+const skel = (cols, n = 4) => Array.from({ length: n }, () => `<tr><td colspan="${cols}"><div class="mk-skel"></div></td></tr>`).join('');
+
+/* =====================================================================
+   4. Vues
+   ===================================================================== */
+const state = { view: 'dashboard', f: { status: '', q: '', courseId: '', from: '', to: '', sort: 'createdAt,desc', page: 0, size: 8 }, pay: { status: '', method: '', page: 0 }, invPage: 0, orders: [] };
+
+document.querySelectorAll('#tabs .mk-tab').forEach(b => b.onclick = () => go(b.dataset.v));
+function go(v) {
+  state.view = v;
+  document.querySelectorAll('#tabs .mk-tab').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  ({ dashboard: renderDashboard, orders: renderOrders, payments: renderPayments, invoices: renderInvoices })[v]();
+}
+
+/* ---------------- Tableau de bord ---------------- */
+async function renderDashboard() {
+  $('#view').innerHTML = `<section class="mk-kpis">${'<div class="mk-panel mk-kpi"><div class="mk-skel" style="height:56px"></div></div>'.repeat(4)}</section>`;
+  try {
+    const [{ data: s }, { data: r }] = await Promise.all([call('GET', '/api/orders/stats'), call('GET', '/api/orders', { page: 0, size: 6, sort: 'createdAt,desc' })]);
+    $('#cnt-orders').textContent = s.totalOrders;
+    const tot = Math.max(s.totalOrders, 1), maxS = Math.max(1, ...s.topCourses.map(c => c.salesCount));
+    const dist = [['Payées', s.paidOrders, '#34d399'], ['En attente', s.pendingOrders, '#fbbf24'], ['Échouées', s.failedOrders, '#f87171'], ['Remboursées', s.refundedOrders, '#c084fc']];
+    $('#view').innerHTML = `
+    <section class="mk-kpis">
+      <div class="mk-panel mk-kpi emerald"><div class="label">Chiffre d'affaires</div><div class="value">${money(s.totalRevenue)} <small style="font-size:14px">${s.currency}</small></div><div class="hint">Panier moyen : ${money(s.averageBasket)} ${s.currency}</div></div>
+      <div class="mk-panel mk-kpi blue"><div class="label">Commandes</div><div class="value">${s.totalOrders}</div><div class="hint">${s.paidOrders} payées, ${s.pendingOrders} en attente</div></div>
+      <div class="mk-panel mk-kpi amber"><div class="label">Transactions</div><div class="value">${s.totalPayments}</div><div class="hint">${s.successfulPayments} acceptées, ${s.totalPayments - s.successfulPayments} refusées</div></div>
+      <div class="mk-panel mk-kpi purple"><div class="label">Factures</div><div class="value">${s.invoicesCount}</div><div class="hint">${s.refundedOrders ? s.refundedOrders + ' remboursement(s)' : 'Aucun remboursement'}</div></div>
+    </section>
+    <section class="mk-grid-2">
+      <div class="mk-panel mk-pad">
+        <h3 class="mk-section-title">Cours les plus vendus</h3>
+        <div class="mk-table-wrap"><table class="mk-table"><thead><tr><th>#</th><th>Cours</th><th>Ventes</th><th class="num">Revenu</th></tr></thead><tbody>
+        ${s.topCourses.map((c, i) => `<tr><td class="mk-id">${i + 1}</td><td class="mk-strong">${esc(c.courseTitle)}</td>
+          <td style="min-width:140px"><div class="mk-bar"><span style="width:${c.salesCount * 100 / maxS}%;background:var(--blue-2)"></span></div><span class="mk-small mk-muted">${c.salesCount} vente${c.salesCount > 1 ? 's' : ''}</span></td>
+          <td class="num mk-amount">${money(c.revenue)}</td></tr>`).join('') || '<tr><td colspan="4" class="mk-empty">Aucune vente pour le moment.</td></tr>'}
+        </tbody></table></div>
+      </div>
+      <div class="mk-panel mk-pad">
+        <h3 class="mk-section-title">Paiements acceptés</h3>
+        <div class="mk-ring" style="--p:${s.paymentSuccessRate}"><div><span><b>${s.paymentSuccessRate}%</b><small>des tentatives</small></span></div></div>
+        <h3 class="mk-section-title" style="margin-top:18px">Commandes par statut</h3>
+        <div class="mk-bars">${dist.map(([l, v, c]) => `<div class="mk-bar-row"><span class="mk-muted">${l}</span><div class="mk-bar"><span style="width:${Math.round(v * 100 / tot)}%;background:${c}"></span></div><b style="text-align:right">${v}</b></div>`).join('')}</div>
+      </div>
+    </section>
+    <section class="mk-panel mk-pad">
+      <h3 class="mk-section-title">Dernières commandes <span style="display:flex;gap:8px"><button class="mk-btn ghost sm" onclick="renderDashboard()">${ico('refresh')} Actualiser</button><button class="mk-btn ghost sm" onclick="go('orders')">Tout voir</button></span></h3>
+      <div class="mk-table-wrap"><table class="mk-table"><thead><tr><th>Commande</th><th>Étudiant</th><th>Cours</th><th>Date</th><th>Statut</th><th class="num">Montant</th></tr></thead><tbody>
+      ${r.content.map(o => `<tr class="clickable" onclick="go('orders');setTimeout(()=>openDetail(${o.id}),50)"><td class="mk-id">#${o.id}</td><td>${student(o.studentId)}</td><td class="mk-muted">${o.itemsCount} cours</td><td class="mk-muted">${fdate(o.createdAt)}</td><td>${badge(o.status)}</td><td class="num mk-amount">${money(o.totalAmount)} ${o.currency}</td></tr>`).join('')}
+      </tbody></table></div>
+    </section>`;
+  } catch (e) { fail(e); $('#view').innerHTML = '<div class="mk-panel mk-empty"><b>Impossible de charger le tableau de bord</b>Vérifiez que le service est démarré.</div>'; }
+}
+
+/* ---------------- Commandes (CRUD) ---------------- */
+const STATUS_TABS = [['', 'Toutes'], ['PENDING', 'En attente'], ['PAID', 'Payées'], ['FAILED', 'Échouées'], ['REFUNDED', 'Remboursées']];
+function renderOrders() {
+  const f = state.f;
+  $('#view').innerHTML = `
+  <section class="mk-panel mk-pad">
+    <div class="mk-toolbar">
+      <h2 class="mk-h1" style="font-size:18px">Commandes</h2>
+      <button class="mk-btn primary" onclick="openForm()">${ico('plus')} Nouvelle commande</button>
+    </div>
+    <div class="mk-tabs" style="margin-bottom:14px">${STATUS_TABS.map(([v, l]) => `<button class="mk-tab ${f.status === v ? 'active' : ''}" onclick="setF({status:'${v}',page:0},true)">${l}</button>`).join('')}</div>
+    <div class="mk-filters" style="margin-bottom:16px">
+      <div class="mk-search"><input class="mk-input" id="f-q" placeholder="N° commande, étudiant, titre de cours…" value="${esc(f.q)}"></div>
+      <select class="mk-select" onchange="setF({courseId:this.value,page:0})"><option value="">Tous les cours</option>${CATALOG.map(c => `<option value="${c.id}" ${String(f.courseId) === String(c.id) ? 'selected' : ''}>${esc(c.title)}</option>`).join('')}</select>
+      <label class="mk-muted mk-small">Du</label><input class="mk-input" type="date" value="${f.from}" onchange="setF({from:this.value,page:0})">
+      <label class="mk-muted mk-small">au</label><input class="mk-input" type="date" value="${f.to}" onchange="setF({to:this.value,page:0})">
+      <select class="mk-select" onchange="setF({sort:this.value,page:0})">
+        ${[['createdAt,desc', 'Plus récentes'], ['createdAt,asc', 'Plus anciennes'], ['totalAmount,desc', 'Montant décroissant'], ['totalAmount,asc', 'Montant croissant']].map(([v, l]) => `<option value="${v}" ${f.sort === v ? 'selected' : ''}>${l}</option>`).join('')}
+      </select>
+      <button class="mk-btn ghost sm" onclick="state.f={status:'',q:'',courseId:'',from:'',to:'',sort:'createdAt,desc',page:0,size:8};renderOrders()">Réinitialiser</button>
+    </div>
+    <div class="mk-table-wrap"><table class="mk-table">
+      <thead><tr><th>Commande</th><th>Étudiant</th><th>Cours achetés</th><th>Créée le</th><th>Statut</th><th>Facture</th><th class="num">Montant</th><th class="actions">Actions</th></tr></thead>
+      <tbody id="o-body">${skel(8)}</tbody></table></div>
+    <div class="mk-pagination" id="o-pag"></div>
+  </section>`;
+  let t; $('#f-q').oninput = e => { clearTimeout(t); t = setTimeout(() => setF({ q: e.target.value, page: 0 }), 300); };
+  loadOrders();
+}
+function setF(p, rerender) { Object.assign(state.f, p); rerender ? renderOrders() : loadOrders(); }
+async function loadOrders() {
+  try {
+    const { data: p } = await call('GET', '/api/orders', state.f);
+    state.orders = p.content;
+    const f = state.f; if (!f.status && !f.q && !f.courseId && !f.from && !f.to) $('#cnt-orders').textContent = p.totalElements;
+    const payable = s => s === 'PENDING' || s === 'FAILED';
+    $('#o-body').innerHTML = p.content.map(o => `
+      <tr class="clickable" onclick="openDetail(${o.id})">
+        <td class="mk-id">#${o.id}</td><td>${student(o.studentId)}</td>
+        <td><div class="mk-courses">${o.items.slice(0, 2).map(i => `<span class="mk-course-line">${esc(i.courseTitle)}</span>`).join('')}${o.items.length > 2 ? `<span class="mk-more">+ ${o.items.length - 2} autre${o.items.length > 3 ? 's' : ''}</span>` : ''}</div></td>
+        <td class="mk-muted">${fdate(o.createdAt, false)}<br><span class="mk-small">${new Date(o.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span></td>
+        <td>${badge(o.status)}</td>
+        <td>${o.invoiceNumber ? `<code class="mk-small">${o.invoiceNumber}</code>` : '<span class="mk-muted">—</span>'}</td>
+        <td class="num mk-amount">${money(o.totalAmount)} <span class="mk-muted mk-small">${o.currency}</span></td>
+        <td class="actions" onclick="event.stopPropagation()">
+          ${payable(o.status) ? `<button class="mk-btn success sm" onclick="openPay(${o.id})">Payer</button>
+            <button class="mk-btn ghost sm mk-icon-btn" title="Modifier" onclick="openForm(${o.id})">${ico('edit')}</button>
+            <button class="mk-btn danger sm mk-icon-btn" title="Supprimer" onclick="askConfirm('delete',${o.id})">${ico('trash')}</button>` : ''}
+          ${o.status === 'PAID' ? `<button class="mk-btn warn sm" onclick="askConfirm('refund',${o.id})">Rembourser</button>` : ''}
+          <button class="mk-btn ghost sm mk-icon-btn" title="Détail" onclick="openDetail(${o.id})">${ico('eye')}</button>
+        </td></tr>`).join('') || '<tr><td colspan="8"><div class="mk-empty">Aucune commande ne correspond à ces filtres.</div></td></tr>';
+    const pages = Array.from({ length: Math.min(5, p.totalPages) }, (_, i) => Math.max(0, Math.min(p.page - 2, p.totalPages - 5)) + i);
+    $('#o-pag').innerHTML = `<span>${p.totalElements} commande${p.totalElements > 1 ? 's' : ''} · page ${p.page + 1} sur ${p.totalPages || 1}</span>
+      <div class="mk-pages"><button class="mk-btn ghost sm" ${p.page === 0 ? 'disabled' : ''} onclick="setF({page:${p.page - 1}})">‹</button>
+      ${pages.length > 1 ? pages.map(n => `<button class="mk-btn sm ${n === p.page ? 'primary' : 'ghost'}" onclick="setF({page:${n}})">${n + 1}</button>`).join('') : ''}
+      <button class="mk-btn ghost sm" ${p.last ? 'disabled' : ''} onclick="setF({page:${p.page + 1}})">›</button></div>`;
+  } catch (e) { fail(e); $('#o-body').innerHTML = '<tr><td colspan="8"><div class="mk-empty"><b>Chargement impossible</b>Vérifiez que le service est démarré.</div></td></tr>'; }
+}
+
+/* ----- Formulaire créer / modifier ----- */
+let formSel = new Map();
+async function openForm(id) {
+  let o = null;
+  if (id) { try { o = (await call('GET', '/api/orders/' + id)).data; } catch (e) { return fail(e); } }
+  formSel = new Map(o ? o.items.map(i => [i.courseId, { id: i.courseId, title: i.courseTitle, price: i.unitPrice }]) : []);
+  modal(`
+    <div class="mk-modal-head"><h3>${o ? 'Modifier la commande #' + o.id : 'Nouvelle commande'}</h3><button class="mk-close" onclick="closeOverlay()">×</button></div>
+    <div class="mk-modal-body">
+      ${o ? '' : `<div class="mk-field"><label class="mk-label">Étudiant</label>
+        <select class="mk-select" id="fm-student" style="width:100%">${Object.entries(NAMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>`}
+      <div class="mk-field"><label class="mk-label">Cours <span class="mk-muted" id="fm-count"></span></label>
+        <div class="mk-course-pick" style="max-height:250px;overflow:auto">${CATALOG.map(c => `
+          <label class="mk-course-opt" id="opt-${c.id}"><input type="checkbox" onchange="toggleC(${c.id})">
+          <span class="t">${esc(c.title)}${c.status !== 'PUBLISHED' ? ' <span class="mk-small" style="color:var(--amber)">· brouillon</span>' : ''}</span>
+          <span class="p">${money(c.price)}</span></label>`).join('')}</div></div>
+      <div class="mk-total"><span class="mk-muted">Total</span><b id="fm-total">0,00</b></div>
+    </div>
+    <div class="mk-modal-foot"><button class="mk-btn ghost" onclick="closeOverlay()">Annuler</button>
+      <button class="mk-btn primary" id="fm-go" onclick="submitForm(${o ? o.id : 'null'})">${o ? 'Enregistrer' : 'Créer la commande'}</button></div>`);
+  refreshSel();
+}
+function toggleC(id) { const c = CATALOG.find(x => x.id === id); formSel.has(id) ? formSel.delete(id) : formSel.set(id, c); refreshSel(); }
+function refreshSel() {
+  CATALOG.forEach(c => { const el = $('#opt-' + c.id); if (!el) return; el.classList.toggle('on', formSel.has(c.id)); el.querySelector('input').checked = formSel.has(c.id); });
+  $('#fm-count').textContent = formSel.size ? '(' + formSel.size + ')' : '';
+  $('#fm-total').textContent = money([...formSel.values()].reduce((a, c) => a + c.price, 0)) + ' ' + CURRENCY;
+  $('#fm-go').disabled = !formSel.size;
+}
+async function submitForm(id) {
+  const body = { courseIds: [...formSel.keys()] };
+  if (!id) body.studentId = $('#fm-student').value;
+  try {
+    const { data: o } = id ? await call('PUT', '/api/orders/' + id, {}, body) : await call('POST', '/api/orders', {}, body);
+    closeOverlay(); toast('success', id ? 'Commande #' + o.id + ' mise à jour' : 'Commande #' + o.id + ' créée', o.itemsCount + ' cours, ' + money(o.totalAmount) + ' ' + o.currency);
+    loadOrders();
+  } catch (e) { fail(e); }
+}
+
+/* ----- Paiement sandbox ----- */
+let payState = {};
+async function openPay(id) {
+  let o; try { o = (await call('GET', '/api/orders/' + id)).data; } catch (e) { return fail(e); }
+  payState = { o, method: 'STRIPE', card: '4242424242424242', fail: false };
+  drawPay();
+}
+function drawPay() {
+  const { o, method: m, card, fail: f } = payState;
+  modal(`
+    <div class="mk-modal-head"><h3>Paiement de la commande #${o.id}</h3><button class="mk-close" onclick="closeOverlay()">×</button></div>
+    <div class="mk-modal-body">
+      <div class="mk-total" style="margin-top:0"><span class="mk-muted">${o.itemsCount} cours</span><b>${money(o.totalAmount)} ${o.currency}</b></div>
+      <label class="mk-label" style="margin-top:16px">Moyen de paiement</label>
+      <div class="mk-methods">${[['STRIPE', 'Carte bancaire'], ['PAYPAL', 'Compte PayPal'], ['SIMULATOR', 'Mode test']].map(([k, d]) => `
+        <div class="mk-method-card ${m === k ? 'on' : ''}" onclick="payState.method='${k}';drawPay()">${method(k)}<br><small>${d}</small></div>`).join('')}</div>
+      ${m === 'STRIPE' ? `
+        <label class="mk-label" style="margin-top:16px">Numéro de carte</label>
+        <input class="mk-input mono" style="width:100%" maxlength="19" value="${card}" oninput="payState.card=this.value">
+        <div class="mk-test-cards">${[['4242424242424242', 'Acceptée'], ['4000000000000002', 'Refusée'], ['4000000000009995', 'Solde insuffisant']].map(([n, l]) => `<button onclick="payState.card='${n}';drawPay()">${n.slice(-4)} · ${l}</button>`).join('')}</div>` : ''}
+      <label class="mk-course-opt ${f ? 'on' : ''}" style="margin-top:14px"><input type="checkbox" ${f ? 'checked' : ''} onchange="payState.fail=this.checked;drawPay()"><span class="t">Simuler un refus</span></label>
+    </div>
+    <div class="mk-modal-foot"><button class="mk-btn ghost" onclick="closeOverlay()">Annuler</button>
+      <button class="mk-btn success" id="pay-go" onclick="doPay()">Payer ${money(o.totalAmount)} ${o.currency}</button></div>`);
+}
+async function doPay() {
+  const { o, method: m, card, fail: f } = payState;
+  $('#pay-go').disabled = true; $('#pay-go').textContent = 'Traitement…';
+  try {
+    const { data: r } = await call('POST', '/api/payments/checkout', {}, { orderId: o.id, method: m, cardNumber: m === 'STRIPE' ? card.replace(/\D/g, '') : undefined, simulateFailure: f || undefined });
+    const ok = r.paymentStatus === 'SUCCESS';
+    modal(`
+      <div class="mk-modal-head"><h3>Paiement de la commande #${o.id}</h3><button class="mk-close" onclick="closeOverlay()">×</button></div>
+      <div class="mk-modal-body">
+        <div class="mk-result ${ok ? 'ok' : 'ko'}"><h4>${ok ? 'Paiement accepté' : 'Paiement refusé'}</h4><p>${esc(r.message)}</p></div>
+        <dl class="mk-kv" style="margin-top:16px">
+          <dt>Référence</dt><dd><code>${r.payment.transactionRef}</code></dd>
+          <dt>Montant</dt><dd>${money(r.payment.amount)} ${r.payment.currency}</dd>
+          <dt>Commande</dt><dd>${badge(r.orderStatus)}</dd>
+          ${r.invoice ? `<dt>Facture</dt><dd><code>${r.invoice.invoiceNumber}</code></dd>` : ''}
+        </dl>
+      </div>
+      <div class="mk-modal-foot">${ok ? `<button class="mk-btn ghost" onclick="viewInvoice('${r.invoice.invoiceNumber}')">Voir la facture</button>` : `<button class="mk-btn ghost" onclick="openPay(${o.id})">Réessayer</button>`}
+        <button class="mk-btn primary" onclick="closeOverlay()">Fermer</button></div>`);
+    ok ? toast('success', 'Paiement accepté', 'Facture ' + r.invoice.invoiceNumber) : toast('error', 'Paiement refusé', r.message);
+    if (state.view === 'orders') loadOrders();
+  } catch (e) { fail(e); closeOverlay(); }
+}
+
+/* ----- Confirmation ----- */
+async function askConfirm(kind, id) {
+  const o = state.orders.find(x => x.id === id) || (await call('GET', '/api/orders/' + id)).data;
+  const del = kind === 'delete';
+  modal(`
+    <div class="mk-modal-body" style="padding-top:22px">
+      <h3 style="margin:0 0 8px;font-size:16px">${del ? 'Supprimer' : 'Rembourser'} la commande #${id} ?</h3>
+      <p class="mk-muted" style="font-size:13px;margin:0">${del ? 'La commande et ses tentatives de paiement seront supprimées définitivement.' : money(o.totalAmount) + ' ' + o.currency + ' seront remboursés à l\'étudiant. La facture reste archivée.'}</p>
+    </div>
+    <div class="mk-modal-foot"><button class="mk-btn ghost" onclick="closeOverlay()">Annuler</button>
+      <button class="mk-btn ${del ? 'danger' : 'warn'}" onclick="doConfirm('${kind}',${id})">${del ? 'Supprimer' : 'Rembourser'}</button></div>`, '" style="max-width:440px');
+}
+async function doConfirm(kind, id) {
+  try {
+    if (kind === 'delete') { await call('DELETE', '/api/orders/' + id); toast('success', 'Commande #' + id + ' supprimée'); }
+    else { await call('POST', '/api/orders/' + id + '/refund'); toast('success', 'Commande #' + id + ' remboursée'); }
+    closeOverlay(); loadOrders();
+  } catch (e) { fail(e); }
+}
+
+/* ----- Tiroir détail ----- */
+async function openDetail(id) {
+  let o; try { o = (await call('GET', '/api/orders/' + id)).data; } catch (e) { return fail(e); }
+  const MNAME = { STRIPE: 'Stripe', PAYPAL: 'PayPal', SIMULATOR: 'Simulateur' };
+  const tl = [['info', 'Commande créée', o.createdAt, o.itemsCount + ' cours']];
+  o.payments.forEach(p => tl.push([p.status === 'SUCCESS' ? 'ok' : 'ko', p.status === 'SUCCESS' ? 'Paiement accepté' : 'Paiement refusé', null, MNAME[p.method] + ' · ' + p.transactionRef]));
+  if (o.invoiceNumber) tl.push(['ok', 'Facture émise', o.paidAt, o.invoiceNumber]);
+  if (o.status === 'REFUNDED') tl.push(['refund', 'Commande remboursée', null, '']);
+  const payable = o.status === 'PENDING' || o.status === 'FAILED';
+  $('#overlay').innerHTML = `<div class="mk-drawer-backdrop" onclick="closeOverlay()"></div>
+  <aside class="mk-drawer">
+    <div class="mk-modal-head"><h3>Commande <span class="mk-id" style="font-size:15px">#${o.id}</span> ${badge(o.status)}</h3><button class="mk-close" onclick="closeOverlay()">×</button></div>
+    <div class="mk-modal-body" style="display:flex;flex-direction:column;gap:20px">
+      ${student(o.studentId)}
+      <dl class="mk-kv"><dt>Créée le</dt><dd>${fdate(o.createdAt)}</dd><dt>Payée le</dt><dd>${fdate(o.paidAt)}</dd><dt>Facture</dt><dd>${o.invoiceNumber || '—'}</dd></dl>
+      <div><h4 class="mk-section-title">Cours</h4><div class="mk-table-wrap"><table class="mk-table"><thead><tr><th>Titre</th><th class="num">Prix</th></tr></thead><tbody>
+        ${o.items.map(i => `<tr><td class="mk-strong">${esc(i.courseTitle)}</td><td class="num">${money(i.unitPrice)}</td></tr>`).join('')}
+        <tr><td class="mk-strong">Total</td><td class="num mk-amount">${money(o.totalAmount)} ${o.currency}</td></tr></tbody></table></div></div>
+      <div><h4 class="mk-section-title">Historique</h4><div class="mk-timeline">${tl.map(([c, t, w, d]) => `<div class="mk-tl ${c}"><b>${t}</b> ${w ? `<span class="when">· ${fdate(w)}</span>` : ''}${d ? `<div class="mk-muted mk-small">${esc(d)}</div>` : ''}</div>`).join('')}</div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${payable ? `<button class="mk-btn success" onclick="openPay(${o.id})">Payer</button><button class="mk-btn ghost" onclick="openForm(${o.id})">${ico('edit')} Modifier</button>
+          <button class="mk-btn ghost" onclick="patchStatus(${o.id},'${o.status === 'PENDING' ? 'FAILED' : 'PENDING'}')">${o.status === 'PENDING' ? 'Marquer comme échouée' : 'Remettre en attente'}</button>
+          <button class="mk-btn danger" onclick="askConfirm('delete',${o.id})">${ico('trash')} Supprimer</button>` : ''}
+        ${o.status === 'PAID' ? `<button class="mk-btn warn" onclick="askConfirm('refund',${o.id})">Rembourser</button>` : ''}
+        ${o.invoiceNumber ? `<button class="mk-btn ghost" onclick="viewInvoice('${o.invoiceNumber}')">Voir la facture</button>` : ''}
+      </div>
+    </div>
+  </aside>`;
+}
+async function patchStatus(id, s) {
+  try { const { data: o } = await call('PATCH', '/api/orders/' + id + '/status', {}, { status: s }); toast('success', 'Commande #' + id + ' : ' + LBL[o.status].toLowerCase()); openDetail(id); if (state.view === 'orders') loadOrders(); }
+  catch (e) { fail(e); }
+}
+
+/* ---------------- Transactions ---------------- */
+async function renderPayments() {
+  const s = state.pay;
+  $('#view').innerHTML = `
+  <section class="mk-panel mk-pad">
+    <div class="mk-toolbar">
+      <div><h2 class="mk-h1" style="font-size:18px">Transactions</h2><p class="mk-sub">Toutes les tentatives de paiement, acceptées ou refusées.</p></div>
+      <div class="mk-filters">
+        <select class="mk-select" onchange="state.pay.status=this.value;state.pay.page=0;renderPayments()">${[['', 'Tous les statuts'], ['SUCCESS', 'Acceptés'], ['FAILED', 'Refusés']].map(([v, l]) => `<option value="${v}" ${s.status === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        <select class="mk-select" onchange="state.pay.method=this.value;state.pay.page=0;renderPayments()">${[['', 'Toutes les passerelles'], ['STRIPE', 'Stripe'], ['PAYPAL', 'PayPal'], ['SIMULATOR', 'Simulateur']].map(([v, l]) => `<option value="${v}" ${s.method === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="mk-kpis" style="margin-bottom:16px" id="p-kpi"></div>
+    <div class="mk-table-wrap"><table class="mk-table"><thead><tr><th>#</th><th>Référence</th><th>Commande</th><th>Étudiant</th><th>Passerelle</th><th>Statut</th><th class="num">Montant</th></tr></thead><tbody id="p-body">${skel(7)}</tbody></table></div>
+    <div class="mk-pagination" id="p-pag"></div>
+  </section>`;
+  try {
+    const { data: p } = await call('GET', '/api/payments', { status: s.status, method: s.method, page: s.page, size: 10, sort: 'id,desc' });
+    const ok = p.content.filter(x => x.status === 'SUCCESS');
+    $('#p-kpi').innerHTML = `<div class="mk-card mk-kpi emerald"><div class="label">Acceptées</div><div class="value">${ok.length}</div><div class="hint">sur cette page</div></div>
+      <div class="mk-card mk-kpi"><div class="label">Refusées</div><div class="value" style="color:var(--red)">${p.content.length - ok.length}</div><div class="hint">sur cette page</div></div>
+      <div class="mk-card mk-kpi blue"><div class="label">Encaissé</div><div class="value">${money(ok.reduce((a, b) => a + b.amount, 0))}</div><div class="hint">sur cette page</div></div>`;
+    $('#p-body').innerHTML = p.content.map(x => `<tr><td class="mk-id">#${x.id}</td><td><code class="mk-small">${x.transactionRef}</code></td><td class="mk-id">#${x.orderId}</td><td>${student(x.studentId)}</td><td>${method(x.method)}</td><td>${badge(x.status)}</td>
+      <td class="num mk-amount" style="${x.status === 'FAILED' ? 'color:#64748b;text-decoration:line-through' : ''}">${money(x.amount)} <span class="mk-small mk-muted">${x.currency}</span></td></tr>`).join('') || '<tr><td colspan="7"><div class="mk-empty">Aucune transaction.</div></td></tr>';
+    $('#p-pag').innerHTML = `<span>${p.totalElements} transaction${p.totalElements > 1 ? 's' : ''}</span><div class="mk-pages"><button class="mk-btn ghost sm" ${p.page === 0 ? 'disabled' : ''} onclick="state.pay.page--;renderPayments()">‹ Précédent</button><span style="align-self:center">${p.page + 1} / ${p.totalPages || 1}</span><button class="mk-btn ghost sm" ${p.last ? 'disabled' : ''} onclick="state.pay.page++;renderPayments()">Suivant ›</button></div>`;
+  } catch (e) { fail(e); }
+}
+
+/* ---------------- Factures ---------------- */
+async function renderInvoices() {
+  $('#view').innerHTML = `
+  <section class="mk-panel mk-pad">
+    <div class="mk-toolbar">
+      <div><h2 class="mk-h1" style="font-size:18px">Factures</h2><p class="mk-sub">Une facture par commande payée.</p></div>
+      <div class="mk-filters"><div class="mk-search"><input class="mk-input mono" id="inv-q" placeholder="INV-2026-000001" onkeyup="if(event.key==='Enter')viewInvoice(this.value.trim().toUpperCase())"></div>
+        <button class="mk-btn primary" onclick="viewInvoice($('#inv-q').value.trim().toUpperCase())">Ouvrir</button></div>
+    </div>
+    <div class="mk-table-wrap"><table class="mk-table"><thead><tr><th>N° facture</th><th>Émise le</th><th>Commande</th><th>Client</th><th>Cours</th><th>Paiement</th><th class="num">Total</th><th></th></tr></thead><tbody id="i-body">${skel(8)}</tbody></table></div>
+    <div class="mk-pagination" id="i-pag"></div>
+  </section>`;
+  try {
+    const { data: p } = await call('GET', '/api/invoices', { page: state.invPage, size: 10, sort: 'issuedAt,desc' });
+    $('#i-body').innerHTML = p.content.map(i => `<tr class="clickable" onclick="viewInvoice('${i.invoiceNumber}')"><td><code class="mk-strong">${i.invoiceNumber}</code></td><td class="mk-muted">${fdate(i.issuedAt)}</td><td class="mk-id">#${i.orderId}</td><td>${student(i.studentId)}</td><td class="mk-muted">${i.items.length}</td><td>${i.paymentMethod ? method(i.paymentMethod) : ''}</td><td class="num mk-amount">${money(i.totalAmount)} <span class="mk-small mk-muted">${i.currency}</span></td><td class="actions"><button class="mk-btn ghost sm">Voir</button></td></tr>`).join('') || '<tr><td colspan="8"><div class="mk-empty">Aucune facture pour le moment.</div></td></tr>';
+    $('#i-pag').innerHTML = `<span>${p.totalElements} facture${p.totalElements > 1 ? 's' : ''}</span><div class="mk-pages"><button class="mk-btn ghost sm" ${p.page === 0 ? 'disabled' : ''} onclick="state.invPage--;renderInvoices()">‹</button><span style="align-self:center">${p.page + 1} / ${p.totalPages || 1}</span><button class="mk-btn ghost sm" ${p.last ? 'disabled' : ''} onclick="state.invPage++;renderInvoices()">›</button></div>`;
+  } catch (e) { fail(e); }
+}
+async function viewInvoice(n) {
+  if (!n) return;
+  let inv; try { inv = (await call('GET', '/api/invoices/number/' + encodeURIComponent(n))).data; } catch (e) { return fail(e); }
+  modal(`
+    <div class="mk-modal-head"><h3>Facture ${inv.invoiceNumber}</h3><span style="display:flex;gap:8px"><button class="mk-btn ghost sm" onclick="try{window.print()}catch(e){}">${ico('print')} Imprimer</button><button class="mk-close" onclick="closeOverlay()">×</button></span></div>
+    <div class="mk-modal-body"><div class="mk-invoice">
+      <div class="head"><div><div class="brand">Learn<span>Hub</span></div><div style="color:#64748b;font-size:12px;margin-top:4px">Plateforme d'apprentissage en ligne<br>ESPRIT — Ariana, Tunisie</div></div>
+        <div style="text-align:right"><div style="font-size:18px;font-weight:900">FACTURE</div><div style="font-family:monospace">${inv.invoiceNumber}</div><div style="color:#64748b;font-size:12px">Émise le ${fdate(inv.issuedAt, false)}</div></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:16px;gap:16px;flex-wrap:wrap">
+        <div><div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Facturé à</div><b>${esc(sname(inv.studentId))}</b><div style="font-family:monospace;font-size:11px;color:#64748b">${inv.studentId}</div></div>
+        <div style="text-align:right"><div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Commande</div><b>#${inv.orderId}</b><div style="font-size:12px;color:#64748b">Payée le ${fdate(inv.paidAt)}</div></div></div>
+      <table><thead><tr><th>Réf.</th><th>Désignation</th><th style="text-align:right">Prix unitaire</th></tr></thead><tbody>
+        ${inv.items.map(i => `<tr><td style="font-family:monospace">C-${i.courseId}</td><td>${esc(i.courseTitle)} <span style="color:#64748b">— accès à vie</span></td><td style="text-align:right">${money(i.unitPrice)} ${inv.currency}</td></tr>`).join('')}</tbody></table>
+      <div class="tot"><table><tr><td>Sous-total</td><td style="text-align:right">${money(inv.totalAmount)} ${inv.currency}</td></tr><tr><td>TVA (formation, exonérée)</td><td style="text-align:right">0,00</td></tr><tr class="grand"><td>Total payé</td><td style="text-align:right">${money(inv.totalAmount)} ${inv.currency}</td></tr></table></div>
+      <div class="foot"><span>Paiement : ${{ STRIPE: 'Carte bancaire (Stripe)', PAYPAL: 'PayPal', SIMULATOR: 'Simulateur' }[inv.paymentMethod] || '—'} · Réf. <span style="font-family:monospace">${inv.transactionRef}</span></span>${inv.orderStatus === 'REFUNDED' ? '<span class="stamp refunded">REMBOURSÉE</span>' : '<span class="stamp">PAYÉE</span>'}</div>
+    </div></div>`, 'wide');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOverlay(); });
+go('dashboard');
+</script>
+</body>
+</html>

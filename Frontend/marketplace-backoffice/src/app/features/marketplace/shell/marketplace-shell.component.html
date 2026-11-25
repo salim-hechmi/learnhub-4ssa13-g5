@@ -1,0 +1,32 @@
+<div class="mk">
+  <header class="mk-panel mk-header">
+    <div>
+      <div class="mk-crumb">Administration / Marketplace</div>
+      <h1 class="mk-h1">Marketplace</h1>
+      <p class="mk-sub">Commandes, paiements et factures des cours.</p>
+    </div>
+  </header>
+
+  <nav class="mk-tabs">
+    @for (t of tabs; track t.path) {
+      <a class="mk-tab" [routerLink]="t.path" routerLinkActive="active">{{ t.label }}</a>
+    }
+  </nav>
+
+  <router-outlet />
+
+  <div class="mk-inspector" title="Dernier appel à l'API">
+    <span>{{ trace().method }}</span>
+    <span class="path">{{ trace().path }}</span>
+    <span [style.color]="statusColor(trace().status)">{{ trace().status || 'erreur' }}</span>
+    <span>{{ trace().ms }} ms</span>
+  </div>
+
+  <div class="mk-toasts">
+    @for (t of toast.toasts(); track t.id) {
+      <div [class]="'mk-toast ' + t.kind" (click)="toast.dismiss(t.id)">
+        <div><b>{{ t.title }}</b>@if (t.detail) {<span>{{ t.detail }}</span>}</div>
+      </div>
+    }
+  </div>
+</div>
