@@ -11,14 +11,14 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 /**
- * UNIQUEMENT avec le profil "standalone" : catalogue simulé pour tester le Marketplace
- * dans Postman sans démarrer course-service ni Eureka.
- * En profil normal, c'est le vrai client Feign qui est utilisé.
+ * Catalogue simulé, actif avec les profils "standalone" (Postman, sans Eureka) et "local"
+ * (enregistré dans Eureka, mais sans dépendre de course-service tant qu'il n'est pas prêt).
+ * Sans profil, c'est le vrai client Feign vers course-service qui est utilisé.
  */
 @Slf4j
 @Primary
 @Component
-@Profile("standalone")
+@Profile({"standalone", "local"})
 public class StandaloneCourseClient implements CourseClient {
 
     private static final Map<Long, CoursePricingResponse> CATALOG = Map.of(

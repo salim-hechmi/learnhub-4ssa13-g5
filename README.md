@@ -8,7 +8,7 @@
 
 > **Projet Académique ESPRIT – Année Universitaire 2026/2027**  
 > **Module :** Architecture des Applications Web Distribuées (AWD)  
-> **Classe :** 4SSA13 &nbsp;|&nbsp; **Groupe :** G1  
+> **Classe :** 4SSA13 &nbsp;|&nbsp; **Groupe :** G5  
 > **Validation 1 :** Présentation du projet et modélisation microservices (Semaine Séance 4)
 
 ---
@@ -150,6 +150,46 @@ npm install
 npm start
 \`\`\`
 - Interface Web accessible sur : [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🛰️ Découverte de services (Eureka) & Observabilité (Actuator)
+
+### Dashboard Eureka
+
+![Dashboard Eureka 8761](Documentation/Captures/eureka-dashboard-8761.png)
+
+- **Deux serveurs Eureka** répliqués : [http://localhost:8761](http://localhost:8761) et [http://127.0.0.1:8762](http://127.0.0.1:8762). Chacun réplique son registre vers l'autre (*DS Replicas* et *available-replicas* sur la capture), donc les deux affichent les mêmes services. Capture du second serveur : [eureka-dashboard-8762.png](Documentation/Captures/eureka-dashboard-8762.png).
+- **Deux instances de `marketplace-service`** (ports `8085` et `8095`), enregistrées en même temps.
+- Les microservices déclarent les **deux** serveurs dans `eureka.client.service-url.defaultZone` : si l'un tombe, ils restent visibles sur l'autre.
+- Détails et marche à suivre pour rendre un service client Eureka : [Backend/eureka-server/README.md](Backend/eureka-server/README.md).
+
+### Lancer Eureka + marketplace sur un PC du groupe
+
+Prérequis : Java 17+ et Maven (aucune base à installer, H2 en mémoire).
+
+```powershell
+cd Backend
+powershell -ExecutionPolicy Bypass -File .\start-all.ps1   # 2 Eureka + 2 instances marketplace
+.\stop-all.ps1                                               # tout arrêter
+```
+
+### Endpoints Actuator exposés
+
+`health`, `info`, `metrics`, `env`, `beans`, `mappings`, `loggers`, `configprops`, `threaddump` (sur `/actuator/...`).
+
+| Endpoint | Capture |
+|---|---|
+| `/actuator` (liste des endpoints) | [actuator-index-8085.png](Documentation/Captures/actuator-index-8085.png) |
+| `/actuator/health` (instance 8085, instance 8095) | [8085](Documentation/Captures/actuator-health-8085.png) · [8095](Documentation/Captures/actuator-health-8095.png) |
+| `/actuator/info` | [actuator-info-8085.png](Documentation/Captures/actuator-info-8085.png) |
+| `/actuator/metrics` | [actuator-metrics-8085.png](Documentation/Captures/actuator-metrics-8085.png) |
+| `/actuator/metrics/http.server.requests` | [actuator-metrics-http-requests-8085.png](Documentation/Captures/actuator-metrics-http-requests-8085.png) |
+| `/actuator/metrics/jvm.memory.used` | [actuator-metrics-jvm-memory-8085.png](Documentation/Captures/actuator-metrics-jvm-memory-8085.png) |
+| `/actuator/env` | [actuator-env-8085.png](Documentation/Captures/actuator-env-8085.png) |
+| `/actuator/mappings` | [actuator-mappings-8085.png](Documentation/Captures/actuator-mappings-8085.png) |
+| `/actuator/loggers` | [actuator-loggers-8085.png](Documentation/Captures/actuator-loggers-8085.png) |
+| `/actuator/health` du serveur Eureka | [actuator-eureka-health-8761.png](Documentation/Captures/actuator-eureka-health-8761.png) |
 
 ---
 

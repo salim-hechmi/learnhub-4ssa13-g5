@@ -15,7 +15,7 @@
     <artifactId>marketplace-service</artifactId>
     <version>1.0.0</version>
     <name>marketplace-service</name>
-    <description>LearnHub - Marketplace &amp; Billing (commandes, paiements sandbox, factures)</description>
+    <description>LearnHub - Marketplace et Billing (commandes, paiements sandbox, factures)</description>
 
     <properties>
         <java.version>17</java.version>
@@ -96,7 +96,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 

@@ -1,0 +1,70 @@
+# =====================================================================
+#  LearnHub - Eureka Server (2 instances répliquées)
+#    peer1 : http://localhost:8761    peer2 : http://127.0.0.1:8762
+#  Lancement : java -jar eureka-server.jar --spring.profiles.active=peer1
+#              java -jar eureka-server.jar --spring.profiles.active=peer2
+#
+#  Pourquoi "localhost" pour l'un et "127.0.0.1" pour l'autre ?
+#  Eureka ignore un pair dont l'URL a le même nom d'hôte que lui-même (il croit que c'est lui).
+#  Avec deux noms différents pour la même machine, la réplication marche sans toucher au
+#  fichier hosts : la solution fonctionne telle quelle sur le PC de chaque membre.
+# =====================================================================
+spring:
+  application:
+    name: eureka-server
+  profiles:
+    default: peer1
+
+eureka:
+  client:
+    register-with-eureka: true   # chaque serveur s'enregistre chez son pair
+    fetch-registry: true
+  server:
+    enable-self-preservation: false        # en local : retirer vite les services arrêtés
+    eviction-interval-timer-in-ms: 5000
+    wait-time-in-ms-when-sync-empty: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans,mappings,loggers
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: eureka-server
+    description: Annuaire de services LearnHub (Netflix Eureka)
+
+---
+spring:
+  config:
+    activate:
+      on-profile: peer1
+server:
+  port: 8761
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:8762/eureka/
+
+---
+spring:
+  config:
+    activate:
+      on-profile: peer2
+server:
+  port: 8762
+eureka:
+  instance:
+    hostname: 127.0.0.1
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

@@ -86,6 +86,23 @@ Les attributs sont **exactement** ceux du cahier des charges (aucune colonne ajo
 
 ## 2. Lancer le service
 
+### Option 0 — Avec Eureka, sur n'importe quel PC (validation Eureka / Actuator)
+Profil `local` : client des **deux** serveurs Eureka, base H2 en mémoire, catalogue simulé.
+Ni MySQL, ni RabbitMQ, ni course-service ne sont nécessaires.
+```bash
+mvn -DskipTests package
+java -jar target/marketplace-service-1.0.0.jar --spring.profiles.active=local                     # instance 1 : 8085
+java -jar target/marketplace-service-1.0.0.jar --spring.profiles.active=local --server.port=8095  # instance 2 : 8095
+```
+Ou tout d'un coup (2 Eureka + 2 marketplace) : `Backend/start-all.ps1`.
+
+Les deux instances apparaissent sous `MARKETPLACE-SERVICE` dans http://localhost:8761 et http://127.0.0.1:8762
+(`instance-id: ${spring.application.name}:${server.port}` les distingue).
+
+Actuator : `/actuator/health`, `/actuator/info`, `/actuator/metrics`, `/actuator/env`, `/actuator/beans`,
+`/actuator/mappings`, `/actuator/loggers`, `/actuator/configprops`, `/actuator/threaddump`.
+Captures : dossier [`Documentation/Captures`](../../Documentation/Captures).
+
 ### Option A — Seul, pour Postman (recommandé pour développer)
 Pas besoin d'Eureka, de course-service ni du Config Server : un **catalogue simulé** (cours 1 à 7)
 remplace l'appel Feign.
@@ -96,7 +113,8 @@ mvn spring-boot:run -Dspring-boot.run.profiles=standalone
 ```
 
 ### Option B — Dans l'architecture complète
-Eureka (:8761), Config Server (:8888, optionnel), RabbitMQ (:5672), course-service (:8082) démarrés :
+Eureka (:8761 et :8762), Config Server (:8888, optionnel), RabbitMQ (:5672), course-service (:8082) démarrés,
+le prix des cours est alors lu en vrai sur course-service via OpenFeign :
 ```bash
 mvn spring-boot:run
 ```
