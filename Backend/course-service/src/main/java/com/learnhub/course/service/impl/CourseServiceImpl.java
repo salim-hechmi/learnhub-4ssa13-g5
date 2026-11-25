@@ -97,7 +97,8 @@ public class CourseServiceImpl implements CourseService {
     @Transactional(readOnly = true)
     public CoursePricingDTO getCoursePricing(Integer id) {
         Course course = findCourseOrThrow(id);
-        return new CoursePricingDTO(course.getId(), course.getTitle(), course.getPrice());
+        return new CoursePricingDTO(course.getId(), course.getTitle(), course.getPrice(),
+                course.getStatus() == null ? null : course.getStatus().name());
     }
 
     @Override

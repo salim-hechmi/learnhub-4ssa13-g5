@@ -160,19 +160,38 @@ npm start
 ![Dashboard Eureka 8761](Documentation/Captures/eureka-dashboard-8761.png)
 
 - **Deux serveurs Eureka** répliqués : [http://localhost:8761](http://localhost:8761) et [http://127.0.0.1:8762](http://127.0.0.1:8762). Chacun réplique son registre vers l'autre (*DS Replicas* et *available-replicas* sur la capture), donc les deux affichent les mêmes services. Capture du second serveur : [eureka-dashboard-8762.png](Documentation/Captures/eureka-dashboard-8762.png).
-- **Deux instances de `marketplace-service`** (ports `8085` et `8095`), enregistrées en même temps.
+- **Les deux microservices les plus sollicités sont dupliqués** et visibles en même temps :
+  - `course-service` (Nawres SOUA) : ports `8082` et `8092` ;
+  - `marketplace-service` (Selim Hechmi) : ports `8085` et `8095`.
 - Les microservices déclarent les **deux** serveurs dans `eureka.client.service-url.defaultZone` : si l'un tombe, ils restent visibles sur l'autre.
 - Détails et marche à suivre pour rendre un service client Eureka : [Backend/eureka-server/README.md](Backend/eureka-server/README.md).
 
-### Lancer Eureka + marketplace sur un PC du groupe
+### Intégration marketplace-service ↔ course-service
 
-Prérequis : Java 17+ et Maven (aucune base à installer, H2 en mémoire).
+Avant de créer une commande, le marketplace demande le prix et le statut du cours à `course-service`, **sans connaître son adresse** :
+
+```
+marketplace-service ──(1) « où est course-service ? »──► Eureka (8761 / 8762)
+        │                                               └─► course-service:8082 , course-service:8092
+        └──(2) GET /api/courses/{id}/pricing (OpenFeign + load balancer) ──► l'une des deux instances
+```
+
+- Un cours **publié** est vendu au prix renvoyé par course-service. Un cours en **brouillon** est refusé (400).
+- Les appels sont **répartis entre les deux instances** de course-service. Exemple après 6 commandes : 5 appels traités par 8082 et 3 par 8092 (métrique `http.server.requests`, captures [8082](Documentation/Captures/loadbalancing-course-8082.png) · [8092](Documentation/Captures/loadbalancing-course-8092.png)).
+- Si course-service ne répond pas, un circuit breaker (Resilience4j) renvoie un 503 clair au lieu de bloquer.
+
+### Lancer l'architecture sur un PC du groupe
+
+Prérequis : Java 17+ et Maven. Pour le mode `integration`, MySQL doit tourner sur le port 3306 (Laragon / XAMPP, utilisateur `root` sans mot de passe). Les bases `db_marketplace` et `learnhub_course_db` sont créées automatiquement.
 
 ```powershell
 cd Backend
-powershell -ExecutionPolicy Bypass -File .\start-all.ps1   # 2 Eureka + 2 instances marketplace
-.\stop-all.ps1                                               # tout arrêter
+powershell -ExecutionPolicy Bypass -File .\start-all.ps1               # 2 Eureka + 2 course + 2 marketplace
+powershell -ExecutionPolicy Bypass -File .\start-all.ps1 -Mode local   # 2 Eureka + 2 marketplace, sans MySQL
+.\stop-all.ps1                                                           # tout arrêter
 ```
+
+Pour tester l'intégration : créer un cours dans course-service (Swagger : http://localhost:8082/swagger-ui.html), le publier (`PUT /api/courses/{id}/publish`), puis le commander dans le marketplace (Swagger : http://localhost:8085/swagger-ui.html, `POST /api/orders` avec `"courseIds": [id]`).
 
 ### Endpoints Actuator exposés
 
@@ -190,6 +209,8 @@ powershell -ExecutionPolicy Bypass -File .\start-all.ps1   # 2 Eureka + 2 instan
 | `/actuator/mappings` | [actuator-mappings-8085.png](Documentation/Captures/actuator-mappings-8085.png) |
 | `/actuator/loggers` | [actuator-loggers-8085.png](Documentation/Captures/actuator-loggers-8085.png) |
 | `/actuator/health` du serveur Eureka | [actuator-eureka-health-8761.png](Documentation/Captures/actuator-eureka-health-8761.png) |
+| `/actuator/health` de course-service (8082, 8092) | [8082](Documentation/Captures/course-health-8082.png) · [8092](Documentation/Captures/course-health-8092.png) |
+| `/api/courses/1/pricing` (contrat lu par le marketplace) | [course-pricing-8082.png](Documentation/Captures/course-pricing-8082.png) |
 
 ---
 

@@ -40,9 +40,8 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
-      # 2ème instance Eureka (selon consigne prof) :
-      # defaultZone: http://localhost:8761/eureka/,http://localhost:8762/eureka/
+      # Les DEUX serveurs Eureka (Backend/eureka-server, profils peer1 et peer2)
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/,http://127.0.0.1:8762/eureka/}
     register-with-eureka: true
     fetch-registry: true
   instance:

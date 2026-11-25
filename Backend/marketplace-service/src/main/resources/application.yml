@@ -66,18 +66,21 @@ eureka:
     lease-expiration-duration-in-seconds: 30
 
 # ---------- Resilience4j (circuit breaker de l'appel course-service) ----------
+# OpenFeign nomme le circuit d'après la méthode (« CourseClient#getCoursePricing(Long) »),
+# pas d'après le service : on règle donc la configuration par défaut, sinon le délai
+# d'attente resterait à 1 s et le premier appel (plus lent) partirait en 503.
 resilience4j:
   circuitbreaker:
-    instances:
-      course-service:
+    configs:
+      default:
         sliding-window-size: 10
         minimum-number-of-calls: 5
         failure-rate-threshold: 50
         wait-duration-in-open-state: 10s
         permitted-number-of-calls-in-half-open-state: 3
   timelimiter:
-    instances:
-      course-service:
+    configs:
+      default:
         timeout-duration: 5s
 
 # ---------- Paramètres métier du Marketplace ----------
@@ -177,3 +180,24 @@ management:
   health:
     rabbit:
       enabled: false   # RabbitMQ n'est pas lancé en local : ne pas marquer le service DOWN
+
+---
+# =====================================================================
+#  Profil "integration" : marketplace + course-service (Nawres) via Eureka.
+#  Base MySQL db_marketplace (Laragon / XAMPP), prix lus en vrai sur course-service
+#  avec OpenFeign (lb://course-service) : la charge est répartie entre ses instances.
+#  Lancement : java -jar target/marketplace-service-1.0.0.jar --spring.profiles.active=integration
+# =====================================================================
+spring:
+  config:
+    activate:
+      on-profile: integration
+  cloud:
+    config:
+      enabled: false
+management:
+  health:
+    rabbit:
+      enabled: false
+    config:
+      enabled: false

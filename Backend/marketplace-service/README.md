@@ -112,6 +112,15 @@ remplace l'appel Feign.
 mvn spring-boot:run -Dspring-boot.run.profiles=standalone
 ```
 
+### Option I — Intégré avec course-service (validation Eureka avec Nawres)
+Eureka (:8761 et :8762), course-service (:8082 et :8092) et MySQL démarrés. Le prix et le statut des cours
+sont lus en vrai sur course-service (OpenFeign + Eureka, charge répartie entre ses instances) :
+```bash
+java -jar target/marketplace-service-1.0.0.jar --spring.profiles.active=integration
+java -jar target/marketplace-service-1.0.0.jar --spring.profiles.active=integration --server.port=8095
+```
+Ou tout d'un coup : `Backend/start-all.ps1` (mode `integration` par défaut).
+
 ### Option B — Dans l'architecture complète
 Eureka (:8761 et :8762), Config Server (:8888, optionnel), RabbitMQ (:5672), course-service (:8082) démarrés,
 le prix des cours est alors lu en vrai sur course-service via OpenFeign :
