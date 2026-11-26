@@ -1,0 +1,196 @@
+{
+  "info": {
+    "name": "LearnHub — API Gateway (8080)",
+    "description": "Toutes les requêtes passent par la Gateway (port 8080), jamais par le port d'un microservice.\n\n1. Lancer l'architecture : Backend\\start-all.ps1\n2. Exécuter les dossiers 0 et 1 (Run collection).\n3. Load balancing : lancer le dossier 2 avec 20 itérations, puis le dossier 3.\n4. Circuit breaker : arrêter marketplace-service (ports 8085 et 8095) puis exécuter le dossier 4 plusieurs fois.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "gatewayUrl", "value": "http://localhost:8080" },
+    { "key": "eurekaUrl", "value": "http://localhost:8761" },
+    { "key": "studentId", "value": "a1b2c3d4-0000-4000-8000-000000000001" },
+    { "key": "adminId", "value": "admin-0000-4000-8000-000000000099" }
+  ],
+  "item": [
+    {
+      "name": "0. Eureka et Gateway",
+      "item": [
+        {
+          "name": "Registre Eureka : gateway et microservices enregistrés",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const apps = pm.response.json().applications.application;",
+            "const count = name => { const a = apps.find(x => x.name === name); return a ? [].concat(a.instance).length : 0; };",
+            "pm.test('Statut HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.test('API-GATEWAY enregistrée dans Eureka', () => pm.expect(count('API-GATEWAY')).to.be.at.least(1));",
+            "pm.test('MARKETPLACE-SERVICE : 2 instances', () => pm.expect(count('MARKETPLACE-SERVICE')).to.eql(2));",
+            "pm.test('COURSE-SERVICE : 2 instances', () => pm.expect(count('COURSE-SERVICE')).to.eql(2));",
+            "apps.forEach(a => console.log(a.name, [].concat(a.instance).map(i => i.ipAddr + ':' + i.port.$).join(' , ')));"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{eurekaUrl}}/eureka/apps", "host": ["{{eurekaUrl}}"], "path": ["eureka", "apps"] }
+          }
+        },
+        {
+          "name": "Routes déclarées dans la Gateway",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const routes = pm.response.json();",
+            "pm.test('Statut HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.test('Une route par microservice (7)', () => {",
+            "  ['marketplace-service','course-service','identity-service','learning-journey-service','assessment-service','community-service','ai-learning-coach-service']",
+            "    .forEach(id => pm.expect(routes.map(r => r.route_id)).to.include(id));",
+            "});",
+            "pm.test('Routage via Eureka (lb://)', () => routes.forEach(r => pm.expect(r.uri).to.match(/^lb:\\/\\//)));"
+          ] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{gatewayUrl}}/actuator/gateway/routes", "host": ["{{gatewayUrl}}"], "path": ["actuator", "gateway", "routes"] } }
+        }
+      ]
+    },
+    {
+      "name": "1. Un endpoint par microservice (via 8080)",
+      "item": [
+        {
+          "name": "marketplace-service : indicateurs du backoffice",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Statut HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.test('Réponse du marketplace (chiffre d\\'affaires, commandes)', () => {",
+            "  const b = pm.response.json();",
+            "  pm.expect(b).to.have.property('totalOrders');",
+            "});"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-User-Id", "value": "{{adminId}}" },
+              { "key": "X-User-Roles", "value": "ADMIN" }
+            ],
+            "url": { "raw": "{{gatewayUrl}}/api/orders/stats", "host": ["{{gatewayUrl}}"], "path": ["api", "orders", "stats"] }
+          }
+        },
+        {
+          "name": "course-service : catalogue des cours publiés",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Statut HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.test('Réponse JSON de course-service', () => pm.response.to.be.json);"
+          ] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{gatewayUrl}}/api/courses", "host": ["{{gatewayUrl}}"], "path": ["api", "courses"] } }
+        },
+        {
+          "name": "identity-service : profil connecté",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('La Gateway trouve identity-service dans Eureka (pas de 503)', () => pm.expect(pm.response.code).to.not.eql(503));"
+          ] } }],
+          "request": { "method": "GET", "header": [{ "key": "X-User-Id", "value": "{{studentId}}" }], "url": { "raw": "{{gatewayUrl}}/api/me", "host": ["{{gatewayUrl}}"], "path": ["api", "me"] } }
+        },
+        {
+          "name": "learning-journey-service : inscriptions d'un étudiant",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('La Gateway trouve learning-journey-service dans Eureka (pas de 503)', () => pm.expect(pm.response.code).to.not.eql(503));"
+          ] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{gatewayUrl}}/api/students/{{studentId}}/enrollments", "host": ["{{gatewayUrl}}"], "path": ["api", "students", "{{studentId}}", "enrollments"] } }
+        },
+        {
+          "name": "assessment-service : détail d'un quiz",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('La Gateway trouve assessment-service dans Eureka (pas de 503)', () => pm.expect(pm.response.code).to.not.eql(503));"
+          ] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{gatewayUrl}}/api/quizzes/1", "host": ["{{gatewayUrl}}"], "path": ["api", "quizzes", "1"] } }
+        },
+        {
+          "name": "community-service : avis d'un cours",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('La Gateway trouve community-service dans Eureka (pas de 503)', () => pm.expect(pm.response.code).to.not.eql(503));"
+          ] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{gatewayUrl}}/api/courses/1/reviews", "host": ["{{gatewayUrl}}"], "path": ["api", "courses", "1", "reviews"] } }
+        },
+        {
+          "name": "ai-learning-coach-service : recommandations",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('La Gateway trouve ai-learning-coach-service dans Eureka (pas de 503)', () => pm.expect(pm.response.code).to.not.eql(503));"
+          ] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{gatewayUrl}}/api/students/{{studentId}}/recommendations", "host": ["{{gatewayUrl}}"], "path": ["api", "students", "{{studentId}}", "recommendations"] } }
+        }
+      ]
+    },
+    {
+      "name": "2. Load balancing (Runner : 20 itérations)",
+      "item": [
+        {
+          "name": "marketplace-service (algorithme Weighted 3:1)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Statut HTTP 200', () => pm.response.to.have.status(200));"] } }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-User-Id", "value": "{{adminId}}" },
+              { "key": "X-User-Roles", "value": "ADMIN" }
+            ],
+            "url": { "raw": "{{gatewayUrl}}/api/orders/stats", "host": ["{{gatewayUrl}}"], "path": ["api", "orders", "stats"] }
+          }
+        },
+        {
+          "name": "course-service (algorithme Random)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Statut HTTP 200', () => pm.response.to.have.status(200));"] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{gatewayUrl}}/api/courses", "host": ["{{gatewayUrl}}"], "path": ["api", "courses"] } }
+        }
+      ]
+    },
+    {
+      "name": "3. Répartition mesurée sur chaque instance (Actuator)",
+      "description": "Compteur de requêtes reçues par chaque instance (http.server.requests). Appels directs aux instances : uniquement pour vérifier la répartition.",
+      "item": [
+        {
+          "name": "marketplace 8085 (poids 3)",
+          "event": [{ "listen": "test", "script": { "exec": ["const c = pm.response.json().measurements.find(m => m.statistic === 'COUNT').value;", "console.log('marketplace 8085 :', c);", "pm.test('Requêtes reçues par 8085 : ' + c, () => pm.expect(c).to.be.above(0));"] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "http://localhost:8085/actuator/metrics/http.server.requests?tag=uri:/api/orders/stats", "protocol": "http", "host": ["localhost"], "port": "8085", "path": ["actuator", "metrics", "http.server.requests"], "query": [{ "key": "tag", "value": "uri:/api/orders/stats" }] } }
+        },
+        {
+          "name": "marketplace 8095 (poids 1)",
+          "event": [{ "listen": "test", "script": { "exec": ["const c = pm.response.json().measurements.find(m => m.statistic === 'COUNT').value;", "console.log('marketplace 8095 :', c);", "pm.test('Requêtes reçues par 8095 : ' + c, () => pm.expect(c).to.be.above(0));"] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "http://localhost:8095/actuator/metrics/http.server.requests?tag=uri:/api/orders/stats", "protocol": "http", "host": ["localhost"], "port": "8095", "path": ["actuator", "metrics", "http.server.requests"], "query": [{ "key": "tag", "value": "uri:/api/orders/stats" }] } }
+        },
+        {
+          "name": "course 8082 (Random)",
+          "event": [{ "listen": "test", "script": { "exec": ["const c = pm.response.json().measurements.find(m => m.statistic === 'COUNT').value;", "console.log('course 8082 :', c);", "pm.test('Requêtes reçues par 8082 : ' + c, () => pm.expect(c).to.be.above(0));"] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "http://localhost:8082/actuator/metrics/http.server.requests?tag=uri:/api/courses", "protocol": "http", "host": ["localhost"], "port": "8082", "path": ["actuator", "metrics", "http.server.requests"], "query": [{ "key": "tag", "value": "uri:/api/courses" }] } }
+        },
+        {
+          "name": "course 8092 (Random)",
+          "event": [{ "listen": "test", "script": { "exec": ["const c = pm.response.json().measurements.find(m => m.statistic === 'COUNT').value;", "console.log('course 8092 :', c);", "pm.test('Requêtes reçues par 8092 : ' + c, () => pm.expect(c).to.be.above(0));"] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "http://localhost:8092/actuator/metrics/http.server.requests?tag=uri:/api/courses", "protocol": "http", "host": ["localhost"], "port": "8092", "path": ["actuator", "metrics", "http.server.requests"], "query": [{ "key": "tag", "value": "uri:/api/courses" }] } }
+        }
+      ]
+    },
+    {
+      "name": "4. Circuit breaker (arrêter marketplace-service d'abord)",
+      "item": [
+        {
+          "name": "Appel du marketplace : réponse de secours",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('503 renvoyé par le fallback de la Gateway', () => {",
+            "  pm.response.to.have.status(503);",
+            "  pm.expect(pm.response.json().source).to.include('fallback');",
+            "});",
+            "console.log('cause :', pm.response.json().cause);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-User-Id", "value": "{{adminId}}" },
+              { "key": "X-User-Roles", "value": "ADMIN" }
+            ],
+            "url": { "raw": "{{gatewayUrl}}/api/orders/stats", "host": ["{{gatewayUrl}}"], "path": ["api", "orders", "stats"] }
+          }
+        },
+        {
+          "name": "État du circuit breaker",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const cb = pm.response.json().circuitBreakers.marketplaceCB;",
+            "console.log('marketplaceCB :', cb.state, 'échecs', cb.failureRate);",
+            "pm.test('État du circuit : ' + cb.state, () => pm.expect(['CLOSED','OPEN','HALF_OPEN']).to.include(cb.state));"
+          ] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{gatewayUrl}}/actuator/circuitbreakers", "host": ["{{gatewayUrl}}"], "path": ["actuator", "circuitbreakers"] } }
+        }
+      ]
+    }
+  ]
+}

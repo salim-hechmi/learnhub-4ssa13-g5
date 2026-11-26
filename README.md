@@ -81,6 +81,8 @@ Le dépôt respecte rigoureusement l'organisation demandée par l'enseignant :
 ```text
 learnhub-4ssa13-g5/
 ├── Backend/
+│   ├── api-gateway/               # Point d'accès unique, Swagger unifié, load balancing, circuit breaker (:8080)
+│   ├── eureka-server/             # Découverte de services, 2 instances répliquées (:8761 / :8762)
 │   ├── identity-service/          # Service commun d'authentification et utilisateurs (:8081)
 │   ├── course-service/            # Microservice Catalogue et cours (:8082)
 │   ├── learning-journey-service/  # Microservice Inscriptions et progression (:8083)
@@ -186,8 +188,8 @@ Prérequis : Java 17+ et Maven. Pour le mode `integration`, MySQL doit tourner s
 
 ```powershell
 cd Backend
-powershell -ExecutionPolicy Bypass -File .\start-all.ps1               # 2 Eureka + 2 course + 2 marketplace
-powershell -ExecutionPolicy Bypass -File .\start-all.ps1 -Mode local   # 2 Eureka + 2 marketplace, sans MySQL
+powershell -ExecutionPolicy Bypass -File .\start-all.ps1               # 2 Eureka + 2 course + 2 marketplace + Gateway
+powershell -ExecutionPolicy Bypass -File .\start-all.ps1 -Mode local   # 2 Eureka + 2 marketplace + Gateway, sans MySQL
 .\stop-all.ps1                                                           # tout arrêter
 ```
 
@@ -211,6 +213,76 @@ Pour tester l'intégration : créer un cours dans course-service (Swagger : http
 | `/actuator/health` du serveur Eureka | [actuator-eureka-health-8761.png](Documentation/Captures/actuator-eureka-health-8761.png) |
 | `/actuator/health` de course-service (8082, 8092) | [8082](Documentation/Captures/course-health-8082.png) · [8092](Documentation/Captures/course-health-8092.png) |
 | `/api/courses/1/pricing` (contrat lu par le marketplace) | [course-pricing-8082.png](Documentation/Captures/course-pricing-8082.png) |
+
+---
+
+## 🚪 API Gateway : point d'accès unique, Swagger unifié, load balancing et circuit breaker
+
+Code : [Backend/api-gateway](Backend/api-gateway) (Spring Cloud Gateway, port **8080**). Détails : [Backend/api-gateway/README.md](Backend/api-gateway/README.md).
+
+```
+Postman / Frontend ──► API Gateway :8080 ──(« où est marketplace-service ? »)──► Eureka 8761 / 8762
+                              │
+                              ├─ /api/orders/**, /api/payments/**, /api/invoices/** ─► lb://marketplace-service  (Weighted + circuit breaker)
+                              ├─ /api/courses/**, /api/categories/**, …             ─► lb://course-service       (Random)
+                              └─ identity, learning-journey, assessment, community, ai-coach ─► lb://<service>   (Round Robin)
+```
+
+### 1. La Gateway est enregistrée dans Eureka
+
+![Eureka avec la Gateway](Documentation/Captures/eureka-dashboard-gateway-8761.png)
+
+`API-GATEWAY` (8080) apparaît avec les 2 Eureka (8761, 8762), les 2 `course-service` (8082, 8092) et les 2 `marketplace-service` (8085, 8095).
+
+### 2. Point d'accès unique : tout passe par le port 8080
+
+Chaque route utilise `lb://nom-du-service` : la Gateway demande l'adresse à Eureka et ne connaît aucun port de microservice. Les 7 routes sont visibles sur `GET /actuator/gateway/routes` ([capture](Documentation/Captures/gateway-routes.png)).
+
+| Microservice | Endpoint testé **via la Gateway** | Résultat |
+|---|---|---|
+| marketplace-service | `GET http://localhost:8080/api/orders/stats` | 200 ([capture](Documentation/Captures/gateway-test-marketplace-8080.png)) |
+| course-service | `GET http://localhost:8080/api/courses` | 200 ([capture](Documentation/Captures/gateway-test-course-8080.png)) |
+| identity-service | `GET http://localhost:8080/api/me` | route prête : le service doit devenir client Eureka |
+| learning-journey-service | `GET http://localhost:8080/api/students/{id}/enrollments` | route prête : le service doit devenir client Eureka |
+| assessment-service | `GET http://localhost:8080/api/quizzes/1` | route prête : le service doit devenir client Eureka |
+| community-service | `GET http://localhost:8080/api/courses/1/reviews` | route prête : le service doit devenir client Eureka |
+| ai-learning-coach-service | `GET http://localhost:8080/api/students/{id}/recommendations` | route prête : le service doit devenir client Eureka |
+
+Collection Postman : [Backend/api-gateway/postman/LearnHub-Gateway.postman_collection.json](Backend/api-gateway/postman/LearnHub-Gateway.postman_collection.json) (un dossier par étape : Eureka, un endpoint par microservice, load balancing, circuit breaker). Chaque responsable ajoute la capture Postman de son microservice une fois celui-ci enregistré dans Eureka (dépendance `spring-cloud-starter-netflix-eureka-client` + bloc `eureka:` du yml, voir [Backend/eureka-server/README.md](Backend/eureka-server/README.md)).
+
+### 3. Documentation centralisée : Swagger unifié
+
+**http://localhost:8080/swagger-ui.html** : la liste « Select a definition » contient les 7 microservices. La Gateway récupère la doc OpenAPI de chacun via Eureka (`/docs/<ms>/v3/api-docs`), et « Try it out » envoie les requêtes **à la Gateway** (serveur `http://localhost:8080`).
+
+![Swagger unifié, liste des microservices](Documentation/Captures/gateway-swagger-unifie-liste-ms.png)
+
+Captures complètes : [marketplace-service](Documentation/Captures/gateway-swagger-unifie-marketplace.png) · [course-service](Documentation/Captures/gateway-swagger-unifie-course.png).
+
+### 4. Algorithmes de load balancing (un par microservice)
+
+Configuration : [LoadBalancingConfig.java](Backend/api-gateway/src/main/java/tn/esprit/learnhub/gateway/loadbalancer/LoadBalancingConfig.java). Les autres services gardent l'algorithme par défaut (Round Robin).
+
+| Microservice | Algorithme | Principe | Mesure (20 appels via la Gateway) |
+|---|---|---|---|
+| course-service (8082, 8092) | **Random** | chaque requête part sur une instance tirée au hasard | 1ʳᵉ série : 5 / 15 ; 2ᵉ série : 9 / 11 |
+| marketplace-service (8085, 8095) | **Weighted** (pondéré) | chaque instance annonce un poids dans Eureka (`metadata-map.weight` : 8085 = 3, 8095 = 1) | 15 / 5 à chaque série (75 % / 25 %) |
+
+Nombre de requêtes reçues par chaque instance (`/actuator/metrics/http.server.requests`) : [8085](Documentation/Captures/gateway-lb-weighted-8085.png) · [8095](Documentation/Captures/gateway-lb-weighted-8095.png) · [8082](Documentation/Captures/gateway-lb-random-8082.png) · [8092](Documentation/Captures/gateway-lb-random-8092.png).
+
+### 5. Circuit breaker sur la route du marketplace
+
+Dépendance `spring-cloud-starter-circuitbreaker-reactor-resilience4j`, filtre `CircuitBreaker` sur la route `marketplace-service` avec `fallbackUri: forward:/fallback/marketplace` ([FallbackController.java](Backend/api-gateway/src/main/java/tn/esprit/learnhub/gateway/fallback/FallbackController.java)).
+
+Test réalisé : les deux instances du marketplace sont **arrêtées**, puis `GET http://localhost:8080/api/orders/stats` est appelé plusieurs fois.
+
+1. Les premiers appels échouent (connexion impossible, environ 2 s chacun) : la Gateway renvoie le **fallback** en 503.
+2. Dès que le taux d'échec dépasse 50 % (sur 5 appels minimum), le circuit passe à **OPEN** : la Gateway répond par le fallback en **moins de 10 ms**, sans appeler le service (`CallNotPermittedException`).
+3. Pendant ce temps, `course-service` reste accessible via la Gateway (200).
+4. Après le redémarrage du marketplace, le circuit passe à HALF_OPEN puis revient à **CLOSED** au bout de 15 s.
+
+![Fallback du circuit breaker](Documentation/Captures/gateway-circuitbreaker-fallback.png)
+
+État du circuit : [gateway-circuitbreaker-open.png](Documentation/Captures/gateway-circuitbreaker-open.png) (`/actuator/circuitbreakers`).
 
 ---
 

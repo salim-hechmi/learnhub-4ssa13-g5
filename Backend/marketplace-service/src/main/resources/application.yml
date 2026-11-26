@@ -64,6 +64,9 @@ eureka:
     instance-id: ${spring.application.name}:${server.port}
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
+    # Poids de l'instance pour l'algorithme Weighted de l'API Gateway (start-all.ps1 : 8085 = 3, 8095 = 1)
+    metadata-map:
+      weight: ${INSTANCE_WEIGHT:1}
 
 # ---------- Resilience4j (circuit breaker de l'appel course-service) ----------
 # OpenFeign nomme le circuit d'après la méthode (« CourseClient#getCoursePricing(Long) »),

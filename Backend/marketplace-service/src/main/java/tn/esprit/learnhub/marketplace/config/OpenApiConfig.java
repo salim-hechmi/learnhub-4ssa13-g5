@@ -5,7 +5,6 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.HeaderParameter;
-import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.context.annotation.Bean;
@@ -13,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 import tn.esprit.learnhub.marketplace.util.CurrentUser;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 public class OpenApiConfig {
@@ -33,10 +31,10 @@ public class OpenApiConfig {
                                 Microservice 5 (port 8085) : commandes, paiement sandbox simulé (Stripe / PayPal / Simulateur), factures.
                                 Identité propagée par l'API Gateway via les en-têtes X-User-Id, X-User-Roles, X-User-Email.
                                 Publie l'événement PaymentCompleted sur RabbitMQ (exchange learnhub.marketplace.exchange).""")
-                        .contact(new Contact().name("Selim Hechmi — Team Lead G5 (4SSA13)")))
-                .servers(List.of(
-                        new Server().url("http://localhost:8085").description("Accès direct au service"),
-                        new Server().url("http://localhost:8080").description("Via l'API Gateway")));
+                        .contact(new Contact().name("Selim Hechmi — Team Lead G5 (4SSA13)")));
+        // Pas de serveur écrit en dur : springdoc le déduit de la requête.
+        // Ouvert via la Gateway (Swagger unifié, port 8080) -> "Try it out" passe par la Gateway ;
+        // ouvert en direct (8085 ou 8095) -> appelle cette instance.
     }
 
     /** Ajoute les en-têtes d'identité de la Gateway à chaque opération qui reçoit un CurrentUser. */

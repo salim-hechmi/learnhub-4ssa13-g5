@@ -6,6 +6,7 @@
 #     course-service     : 8082 et 8092   (Nawres Soua, MySQL learnhub_course_db)
 #     marketplace-service: 8085 et 8095   (Selim Hechmi, MySQL db_marketplace)
 #     -> le marketplace lit les prix sur course-service via Eureka + OpenFeign
+#     api-gateway        : 8080   (point d'accès unique, Swagger unifié, load balancing, circuit breaker)
 #     Prérequis : Java 17+, Maven, MySQL démarré sur le port 3306 (Laragon / XAMPP, root sans mot de passe)
 #
 #  Mode "local" : 2 Eureka + 2 marketplace seulement, base H2 en mémoire, aucun MySQL nécessaire
@@ -74,11 +75,18 @@ if ($Mode -eq 'integration') {
 }
 
 Write-Host "Démarrage de marketplace-service (2 instances, profil $profile)..."
-Start-Jar 'marketplace-service' 'marketplace-8085' @("--spring.profiles.active=$profile")
-Start-Jar 'marketplace-service' 'marketplace-8095' @("--spring.profiles.active=$profile", '--server.port=8095')
+# INSTANCE_WEIGHT : poids annoncé dans Eureka, utilisé par l'algorithme Weighted de la Gateway (75 % / 25 %)
+Start-Jar 'marketplace-service' 'marketplace-8085' @("--spring.profiles.active=$profile", '--INSTANCE_WEIGHT=3')
+Start-Jar 'marketplace-service' 'marketplace-8095' @("--spring.profiles.active=$profile", '--server.port=8095', '--INSTANCE_WEIGHT=1')
 Wait-Url 'http://localhost:8085/actuator/health' 'Marketplace 8085'
 Wait-Url 'http://localhost:8095/actuator/health' 'Marketplace 8095'
+
+Write-Host 'Démarrage de l''API Gateway (port 8080)...'
+Start-Jar 'api-gateway' 'api-gateway-8080' @()
+Wait-Url 'http://localhost:8080/actuator/health' 'API Gateway 8080'
 
 Write-Host ''
 Write-Host 'Les instances apparaissent dans Eureka en moins d''une minute :'
 Write-Host '  http://localhost:8761   et   http://127.0.0.1:8762'
+Write-Host 'Point d''accès unique (Postman, frontend) : http://localhost:8080'
+Write-Host 'Swagger unifié                           : http://localhost:8080/swagger-ui.html'

@@ -1,0 +1,232 @@
+# =====================================================================
+#  LearnHub - API Gateway (Spring Cloud Gateway)
+#  Port 8080 = point d'accès UNIQUE : le frontend et Postman n'appellent plus
+#  les ports des microservices (8081..8087), seulement http://localhost:8080
+#  Les URI "lb://nom-du-service" sont résolues dans Eureka (load balancing).
+# =====================================================================
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      # Délais vers les microservices : au-delà, le circuit breaker considère l'appel en échec
+      httpclient:
+        connect-timeout: 2000
+        response-timeout: 5s
+
+      # CORS centralisé : le frontend Angular appelle la Gateway, jamais les services directement
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: "http://localhost:4200"
+            allowed-methods: "*"
+            allowed-headers: "*"
+            exposed-headers: "Location"
+
+      routes:
+        # ---------------- Selim Hechmi : marketplace-service ----------------
+        # Load balancing Weighted (voir LoadBalancingConfig) + circuit breaker avec fallback
+        - id: marketplace-service
+          uri: lb://marketplace-service
+          order: 0
+          predicates:
+            - Path=/api/orders/**,/api/payments/**,/api/invoices/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: marketplaceCB
+                fallbackUri: forward:/fallback/marketplace
+                # une réponse 5xx du service compte aussi comme un échec
+                statusCodes:
+                  - 500
+                  - 502
+                  - 503
+                  - 504
+
+        # ---------------- Mootez : community-service ----------------
+        # Déclarée AVANT course-service : /api/courses/{id}/reviews appartient à community
+        - id: community-service
+          uri: lb://community-service
+          order: 1
+          predicates:
+            - Path=/api/courses/*/reviews/**,/api/courses/*/threads/**,/api/threads/**,/api/students/*/badges
+
+        # ---------------- Aziz : learning-journey-service ----------------
+        - id: learning-journey-service
+          uri: lb://learning-journey-service
+          order: 2
+          predicates:
+            - Path=/api/enrollments/**,/api/learning-goals/**,/api/students/*/enrollments,/api/lessons/*/completion
+
+        # ---------------- Adam : assessment-service ----------------
+        - id: assessment-service
+          uri: lb://assessment-service
+          order: 3
+          predicates:
+            - Path=/api/quizzes/**,/api/attempts/**,/api/certificates/**
+
+        # ---------------- Adam : ai-learning-coach-service ----------------
+        - id: ai-learning-coach-service
+          uri: lb://ai-learning-coach-service
+          order: 4
+          predicates:
+            - Path=/api/chat/**,/api/study-plans/**,/api/students/*/recommendations
+
+        # ---------------- Toute l'équipe : identity-service ----------------
+        - id: identity-service
+          uri: lb://identity-service
+          order: 5
+          predicates:
+            - Path=/api/login,/api/register,/api/me,/api/*/roles
+
+        # ---------------- Nawres Soua : course-service ----------------
+        # Load balancing Random (voir LoadBalancingConfig). Ordre 10 : après les routes plus précises
+        - id: course-service
+          uri: lb://course-service
+          order: 10
+          predicates:
+            - Path=/api/courses/**,/api/categories/**,/api/chapters/**,/api/lessons/**
+
+        # ---------------- Documentation OpenAPI de chaque microservice ----------------
+        # /docs/<ms>/v3/api-docs -> /v3/api-docs du microservice (via Eureka).
+        # PreserveHostHeader : le service voit "localhost:8080" et indique donc la Gateway
+        # comme serveur dans sa doc, ainsi "Try it out" du Swagger unifié passe aussi par la Gateway.
+        - id: docs-marketplace
+          uri: lb://marketplace-service
+          predicates:
+            - Path=/docs/marketplace/v3/api-docs
+          filters:
+            - PreserveHostHeader
+            - SetPath=/v3/api-docs
+        - id: docs-course
+          uri: lb://course-service
+          predicates:
+            - Path=/docs/course/v3/api-docs
+          filters:
+            - PreserveHostHeader
+            - SetPath=/api-docs
+        - id: docs-identity
+          uri: lb://identity-service
+          predicates:
+            - Path=/docs/identity/v3/api-docs
+          filters:
+            - PreserveHostHeader
+            - SetPath=/v3/api-docs
+        - id: docs-journey
+          uri: lb://learning-journey-service
+          predicates:
+            - Path=/docs/journey/v3/api-docs
+          filters:
+            - PreserveHostHeader
+            - SetPath=/v3/api-docs
+        - id: docs-assessment
+          uri: lb://assessment-service
+          predicates:
+            - Path=/docs/assessment/v3/api-docs
+          filters:
+            - PreserveHostHeader
+            - SetPath=/v3/api-docs
+        - id: docs-community
+          uri: lb://community-service
+          predicates:
+            - Path=/docs/community/v3/api-docs
+          filters:
+            - PreserveHostHeader
+            - SetPath=/v3/api-docs
+        - id: docs-ai-coach
+          uri: lb://ai-learning-coach-service
+          predicates:
+            - Path=/docs/ai-coach/v3/api-docs
+          filters:
+            - PreserveHostHeader
+            - SetPath=/v3/api-docs
+
+# ---------- Eureka : la Gateway s'enregistre et lit le registre ----------
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/,http://127.0.0.1:8762/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+    registry-fetch-interval-seconds: 5   # voit vite une instance qui arrive ou qui tombe
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+# ---------- Circuit breaker de la route marketplace ----------
+# Fenêtre de 10 appels : dès 5 appels avec au moins 50 % d'échecs, le circuit s'OUVRE
+# et la Gateway répond directement par le fallback pendant 15 s, sans appeler le service.
+resilience4j:
+  circuitbreaker:
+    instances:
+      marketplaceCB:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 15s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+  timelimiter:
+    instances:
+      marketplaceCB:
+        timeout-duration: 5s
+
+# ---------- Swagger UI unifié : http://localhost:8080/swagger-ui.html ----------
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    urls-primary-name: marketplace-service
+    urls:
+      - name: marketplace-service
+        url: /docs/marketplace/v3/api-docs
+      - name: course-service
+        url: /docs/course/v3/api-docs
+      - name: identity-service
+        url: /docs/identity/v3/api-docs
+      - name: learning-journey-service
+        url: /docs/journey/v3/api-docs
+      - name: assessment-service
+        url: /docs/assessment/v3/api-docs
+      - name: community-service
+        url: /docs/community/v3/api-docs
+      - name: ai-learning-coach-service
+        url: /docs/ai-coach/v3/api-docs
+
+# ---------- Actuator ----------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway,circuitbreakers,circuitbreakerevents,loggers,env,mappings
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: api-gateway
+    description: Point d'accès unique de LearnHub (routage, Swagger unifié, load balancing, circuit breaker)
+    version: 1.0.0
+    team: 4SSA13 - Groupe G5 - ESPRIT
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
