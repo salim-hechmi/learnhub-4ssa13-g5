@@ -10,6 +10,12 @@ docker compose up -d --build
 - Backoffice ...... http://localhost:8086/
 - Postman ......... importer `postman/LearnHub_Community_Feedback.postman_collection.json` puis Run collection
 
+## Découverte Eureka
+Le service s'enregistre sous le nom `community-feedback-service` auprès de
+`http://localhost:8761/eureka/` par défaut. Définir `EUREKA_URL` si le serveur Eureka
+utilise une autre adresse. Avec Docker, cette URL doit être joignable depuis le conteneur
+(par exemple `http://host.docker.internal:8761/eureka/` si Eureka tourne sur l'hôte).
+
 ## Sans Docker (dev)
 JDK 25 LTS et Maven sont requis.
 
